@@ -1,0 +1,22 @@
+{
+  "name": "kift-nft",
+  "version": "0.0.1",
+  "description": "some vans becoming nfts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.0.4",
+    "@nomiclabs/hardhat-waffle": "^2.0.1",
+    "@openzeppelin/contracts": "^4.4.2",
+    "chai": "^4.3.4",
+    "ethereum-waffle": "^3.4.0",
+    "hardhat-gas-reporter": "^1.0.8"
+  },
+  "author": "Sante & Kift",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "keccak256": "^1.0.6",
+    "merkletreejs": "^0.2.30"
+  }
+}
