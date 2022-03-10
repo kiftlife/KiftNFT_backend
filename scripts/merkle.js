@@ -36,7 +36,6 @@ console.log(merkleTree.verify(proof, hashedAddresses[0], rootHash))
 
 async function main() {
 
-
   // We get the contract to deploy
   const KiftVans = await hre.ethers.getContractFactory("KiftVans");
   const kiftVans = await KiftVans.deploy(1000, 10);

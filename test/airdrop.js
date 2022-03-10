@@ -27,7 +27,7 @@ describe('Airdrop', function () {
     await kiftVans.deployed();
 
     console.log('setting airdrop root: ', claimRoot);
-    await kiftVans.connect(owner).setClaimListMerkleRoot(claimRoot);
+    await kiftVans.connect(owner).setAirdropListMerkleRoot(claimRoot);
 
     const proof = claimTree.getHexProof(claimHash[1]);
 

@@ -2,41 +2,40 @@
 pragma solidity ^0.8.2;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-// import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/interfaces/IERC2981.sol";
-import "@openzeppelin/contracts/interfaces/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
-import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
-contract KiftVans is ERC721Enumerable, IERC2981, Ownable, ReentrancyGuard  {
+// import "@openzeppelin/contracts/utils/Strings.sol";
+// import "@openzeppelin/contracts/interfaces/IERC20.sol";
+// import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
+// import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+
+contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard  {
     using Counters for Counters.Counter;
 
     Counters.Counter private tokenCounter;
 
-    string private baseURI;
-    string public verificationHash;
+    string private baseURI;     // ifps root dir
+    // string public verificationHash;
 
-    uint256 public constant MAX_VANS_PER_WALLET = 5;
-    uint256 public maxVans;
+    uint256 public constant MAX_VANS_PER_WALLET = 10;
+    uint256 public maxVans;     // the max total number of vans allowed to be minted across all sales
+    uint256 public maxCommunitySaleVans;        // the max number of vans the community sale can mint
 
     uint256 public constant PUBLIC_SALE_PRICE = 0.12 ether;
     bool public isPublicSaleActive;
 
     uint256 public constant COMMUNITY_SALE_PRICE = 0.1 ether;
-    uint256 public maxCommunitySaleVans;
     bool public isCommunitySaleActive;
 
-    uint256 public maxGiftedVans;  
-    uint256 public numGiftedVans;
     bytes32 public airdropMerkleRoot;
-    bytes32 public whitelistMerkleRoot;
+    bytes32 public communityListMerkleRoot;
 
     mapping(string => uint8) existingURIs;
     mapping(address => uint256) public communityMintCounts;
@@ -57,7 +56,7 @@ contract KiftVans is ERC721Enumerable, IERC2981, Ownable, ReentrancyGuard  {
     modifier maxVansPerWallet(uint256 numberOfTokens) {
         require(
             balanceOf(msg.sender) + numberOfTokens <= MAX_VANS_PER_WALLET,
-            "Max vans to mint is five"
+            "Max vans to mint is ten"
         );
         _;
     }
@@ -65,18 +64,6 @@ contract KiftVans is ERC721Enumerable, IERC2981, Ownable, ReentrancyGuard  {
     modifier canMintVans(uint256 numberOfTokens) {
         require(
             tokenCounter.current() + numberOfTokens <= maxVans,
-            "Not enough vans remaining to mint"
-        );
-        _;
-    }
-
-    modifier canGiftVans(uint256 num) {
-        require(
-            numGiftedVans + num <= maxGiftedVans,
-            "Not enough vans remaining to gift"
-        );
-        require(
-            tokenCounter.current() + num <= maxVans,
             "Not enough vans remaining to mint"
         );
         _;
@@ -109,7 +96,7 @@ contract KiftVans is ERC721Enumerable, IERC2981, Ownable, ReentrancyGuard  {
         maxCommunitySaleVans = _maxCommunitySaleVans;
     }
 
-    // ============ WHITELIST TESTING ============
+    // ============ DEV-ONLY WHITELIST TESTING ============
 
     function verify(bytes32[] calldata proof, bytes32 root)
         public
@@ -123,7 +110,7 @@ contract KiftVans is ERC721Enumerable, IERC2981, Ownable, ReentrancyGuard  {
 
     // ============ PUBLIC FUNCTIONS FOR MINTING ============
 
-    // metadataUri = https://pinata.cloud/ifps/Qwdskdfa..../1.json
+    // where metadataUri = https://pinata.cloud/ifps/Qwdskdfa..../1.json
     function mint(uint256 numberOfTokens)
         public
         payable
@@ -157,13 +144,13 @@ contract KiftVans is ERC721Enumerable, IERC2981, Ownable, ReentrancyGuard  {
         communitySaleActive
         canMintVans(numberOfTokens)
         isCorrectPayment(COMMUNITY_SALE_PRICE, numberOfTokens)
-        isValidMerkleProof(merkleProof, whitelistMerkleRoot)
+        isValidMerkleProof(merkleProof, communityListMerkleRoot)
     {
         uint256 numAlreadyMinted = communityMintCounts[msg.sender];
 
         require(
             numAlreadyMinted + numberOfTokens <= MAX_VANS_PER_WALLET,
-            "Max vans to mint in community sale is five"
+            "Max vans to mint in community sale is ten"
         );
 
         require(
@@ -207,9 +194,9 @@ contract KiftVans is ERC721Enumerable, IERC2981, Ownable, ReentrancyGuard  {
         return baseURI;
     }
 
-      function getVerificationHash() external view returns (string memory) {
-        return verificationHash;
-    }
+    // function getVerificationHash() external view returns (string memory) {
+    //     return verificationHash;
+    // }
 
     function getLastTokenId() external view returns (uint256) {
         return tokenCounter.current();
@@ -230,12 +217,12 @@ contract KiftVans is ERC721Enumerable, IERC2981, Ownable, ReentrancyGuard  {
     //     isOpenSeaProxyActive = _isOpenSeaProxyActive;
     // }
 
-    function setVerificationHash(string memory _verificationHash)
-        external
-        onlyOwner
-    {
-        verificationHash = _verificationHash;
-    }
+    // function setVerificationHash(string memory _verificationHash)
+    //     external
+    //     onlyOwner
+    // {
+    //     verificationHash = _verificationHash;
+    // }
 
     function setIsPublicSaleActive(bool _isPublicSaleActive)
         external
@@ -252,10 +239,10 @@ contract KiftVans is ERC721Enumerable, IERC2981, Ownable, ReentrancyGuard  {
     }
 
     function setCommunityListMerkleRoot(bytes32 merkleRoot) external onlyOwner {
-        whitelistMerkleRoot = merkleRoot;
+        communityListMerkleRoot = merkleRoot;
     }
 
-    function setClaimListMerkleRoot(bytes32 merkleRoot) external onlyOwner {
+    function setAirdropListMerkleRoot(bytes32 merkleRoot) external onlyOwner {
         airdropMerkleRoot = merkleRoot;
     }
 
@@ -319,4 +306,5 @@ contract KiftVans is ERC721Enumerable, IERC2981, Ownable, ReentrancyGuard  {
 
         return (address(this), SafeMath.div(SafeMath.mul(salePrice, 5), 100));
     }
+
 }
