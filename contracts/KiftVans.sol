@@ -16,17 +16,17 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 // import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 // import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 
-contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard  {
+contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard {
     using Counters for Counters.Counter;
 
     Counters.Counter private tokenCounter;
 
-    string private baseURI;     // ifps root dir
+    string private baseURI; // ifps root dir
     // string public verificationHash;
 
     uint256 public constant MAX_VANS_PER_WALLET = 10;
-    uint256 public maxVans;     // the max total number of vans allowed to be minted across all sales
-    uint256 public maxCommunitySaleVans;        // the max number of vans the community sale can mint
+    uint256 public maxVans = 9999; // the max total number of vans allowed to be minted across all sales
+    uint256 public maxCommunitySaleVans = 8888; // the max number of vans the community sale can mint
 
     uint256 public constant PUBLIC_SALE_PRICE = 0.12 ether;
     bool public isPublicSaleActive;
@@ -89,12 +89,7 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard  {
         _;
     }
 
-    constructor(uint256 _maxVans, uint256 _maxCommunitySaleVans)
-        ERC721("KiftVans", "KIFT")
-    {
-        maxVans = _maxVans;
-        maxCommunitySaleVans = _maxCommunitySaleVans;
-    }
+    constructor() ERC721("KiftVans", "KIFT") {}
 
     // ============ DEV-ONLY WHITELIST TESTING ============
 
@@ -194,10 +189,6 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard  {
         return baseURI;
     }
 
-    // function getVerificationHash() external view returns (string memory) {
-    //     return verificationHash;
-    // }
-
     function getLastTokenId() external view returns (uint256) {
         return tokenCounter.current();
     }
@@ -215,13 +206,6 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard  {
     //     onlyOwner
     // {
     //     isOpenSeaProxyActive = _isOpenSeaProxyActive;
-    // }
-
-    // function setVerificationHash(string memory _verificationHash)
-    //     external
-    //     onlyOwner
-    // {
-    //     verificationHash = _verificationHash;
     // }
 
     function setIsPublicSaleActive(bool _isPublicSaleActive)
@@ -250,14 +234,6 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard  {
         return tokenCounter.current();
     }
 
-    // function safeMint(address to, string memory uri) public onlyOwner {
-    //     uint256 tokenId = tokenCounter.current();
-    //     tokenCounter.increment();
-    //     _safeMint(to, tokenId);
-    //     _setTokenURI(tokenId, uri);
-    //     existingURIs[uri] = 1;
-    // }
-
     function isContentOwned(string memory uri) public view returns (bool) {
         return existingURIs[uri] == 1;
     }
@@ -270,10 +246,7 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard  {
     }
 
     // ============ FUNCTION OVERRIDES ============
-    function _burn(uint256 tokenId)
-        internal
-        override(ERC721)
-    {
+    function _burn(uint256 tokenId) internal override(ERC721) {
         super._burn(tokenId);
     }
 
@@ -289,8 +262,7 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard  {
     {
         require(_exists(tokenId), "Nonexistent token");
 
-        return
-            string(abi.encodePacked(baseURI, "/", tokenId, ".json"));
+        return string(abi.encodePacked(baseURI, "/", tokenId, ".json"));
     }
 
     /**
@@ -306,5 +278,4 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard  {
 
         return (address(this), SafeMath.div(SafeMath.mul(salePrice, 5), 100));
     }
-
 }

@@ -1,9 +1,12 @@
-require("@nomiclabs/hardhat-waffle");
+require('@nomiclabs/hardhat-waffle');
 require('hardhat-gas-reporter');
+require('dotenv').config();
+
+const { ALCHEMY_POLYGON_API_URL, PRIVATE_KEY, COINMARKETCAP_KEY } = process.env;
 
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
-task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
+task('accounts', 'Prints the list of accounts', async (taskArgs, hre) => {
   const accounts = await hre.ethers.getSigners();
 
   for (const account of accounts) {
@@ -18,22 +21,22 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
  * @type import('hardhat/config').HardhatUserConfig
  */
 module.exports = {
-  solidity: "0.8.4",
+  solidity: '0.8.4',
   paths: {
-    artifacts: './src/artifacts',
+    artifacts: './src/artifacts'
   },
   networks: {
     hardhat: {
       chainId: 1337
     },
-    matic: {
-      url: "https://polygon-mumbai.g.alchemy.com/v2/fvjo_zrIHZDz0OZa3UST18HPIncGy8gO",
-      accounts: [process.env.POLYGON_DEV_PRIVATEKEY]
+    polygon_mumbai: {
+      url: ALCHEMY_POLYGON_API_URL,
+      accounts: [PRIVATE_KEY]
     }
   },
   gasReporter: {
     currency: 'USD',
-    coinmarketcap: process.env.COINMARKETCAP,
-    gasPrice: 50,
-  },
+    coinmarketcap: COINMARKETCAP_KEY,
+    gasPrice: 30
+  }
 };
