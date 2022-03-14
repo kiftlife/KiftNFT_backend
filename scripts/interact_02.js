@@ -8,18 +8,17 @@ const alchemyProvider = new ethers.providers.AlchemyProvider(
     (network = 'maticmum'),
     ALCHEMY_API_KEY
   );
-  const signer = new ethers.Wallet(PRIVATE_KEY, alchemyProvider);
-
-  const kiftContract = new ethers.Contract(CONTRACT_ADDRESS, contract.abi, signer);
+const signer = new ethers.Wallet(PRIVATE_KEY, alchemyProvider);
+const kiftContract = new ethers.Contract(CONTRACT_ADDRESS, contract.abi, signer);
 
 async function main() {
 
-  console.log('Max vans per wallet: ' + await kiftContract.MAX_VANS_PER_WALLET());
+  await kiftContract.connect(signer).setIsCommunitySaleActive(true)
+  await kiftContract.connect(signer).setIsPublicSaleActive(false)
 
-  await kiftContract.connect(signer).setBaseURI('https://foobar.baz')
-
-  console.log('Base uri: ', await kiftContract.getBaseURI())
-  
+  console.log('Community sale active: ', await kiftContract.communitySaleLive())
+  console.log('Public sale active: ', await kiftContract.publicSaleLive())
+    
 }
 
 main()

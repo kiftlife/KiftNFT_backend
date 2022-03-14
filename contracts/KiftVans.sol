@@ -193,6 +193,14 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard {
         return tokenCounter.current();
     }
 
+    function communitySaleLive() external view returns (bool) {
+        return isCommunitySaleActive;
+    }
+
+    function publicSaleLive() external view returns (bool) {
+        return isPublicSaleActive;
+    }
+
     // ============ OWNER-ONLY ADMIN FUNCTIONS ============
 
     function setBaseURI(string memory _baseURI) external onlyOwner {
