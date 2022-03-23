@@ -4,9 +4,6 @@ const { BASE_PREREVEAL_URL, IPFS_BASE_URL } = require('../config/config');
 
 describe('Public Whitelist', function () {
   it('Should allow public mint', async function () {
-    const [owner, addr1, addr2, addr3, addr4, addr5] =
-      await ethers.getSigners();
-
     const kiftVans = await (
       await ethers.getContractFactory('KiftVans')
     ).deploy(BASE_PREREVEAL_URL);
