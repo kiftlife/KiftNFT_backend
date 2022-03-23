@@ -1,6 +1,7 @@
 
 const { expect } = require('chai');
 const { ethers } = require('hardhat');
+const { BASE_PREREVEAL_URL } = require('../config/config');
 
   describe('Public Whitelist', function () {
     it('Should allow public mint', async function () {
@@ -11,7 +12,7 @@ const { ethers } = require('hardhat');
   
       const kiftVans = await (
         await ethers.getContractFactory('KiftVans')
-      ).deploy(1000, 10);
+      ).deploy(BASE_PREREVEAL_URL);
       await kiftVans.deployed();
   
       await kiftVans.setIsPublicSaleActive(true);

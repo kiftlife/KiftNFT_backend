@@ -7,6 +7,7 @@ async function main() {
   await kiftVans.deployed();
 
   console.log('KiftVans NFT Contract deployed to:', kiftVans.address);
+
 }
 
 main()

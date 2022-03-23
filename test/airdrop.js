@@ -1,49 +1,52 @@
 const { expect } = require('chai');
 const { ethers } = require('hardhat');
-const { MerkleTree } = require('merkletreejs');
-const keccak256 = require('keccak256');
+const { BASE_PREREVEAL_URL } = require('../config/config');
 
-const buf2hex = (x) => '0x' + x.toString('hex');
+function generateTokenIdArray(start) {
+  return Array.from({ length: 10 }, (_, i) => i + start);
+}
 
-const claimAddresses = [
-  '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
-  '0x70997970c51812dc3a010c7d01b50e0d17dc79c8'
-];
-
-
+async function asyncForEach(array, callback) {
+  const res = [];
+  for (let index = 0; index < array.length; index++) {
+    res.push(await callback(array[index], index, array));
+  }
+  return res;
+}
 
 describe('Airdrop', function () {
-  it('Should allow airdrop claim', async function () {
-    const [owner, addr1] = await ethers.getSigners();
-    const claimHash = claimAddresses.map((addr) => keccak256(addr));
-    const claimTree = new MerkleTree(claimHash, keccak256, {
-      sortPairs: true
-    });
-    const claimRoot = buf2hex(claimTree.getRoot());
+  it('Owner should mint airdropped tokens and send to recipients', async function () {
+    const [owner, addr1, addr2, addr3, addr4, addr5] =
+      await ethers.getSigners();
 
     const kiftVans = await (
       await ethers.getContractFactory('KiftVans')
-    ).deploy(1000, 10);
+    ).deploy(BASE_PREREVEAL_URL);
+
     await kiftVans.deployed();
+    await kiftVans.connect(owner).airdropMint();
 
-    console.log('setting airdrop root: ', claimRoot);
-    await kiftVans.connect(owner).setAirdropListMerkleRoot(claimRoot);
+    const maxAirdroppedVans = 100;
+    const numToAirdrop = 10;
 
-    const proof = claimTree.getHexProof(claimHash[1]);
+    let ownerBalance = await kiftVans.balanceOf(owner.address);
+    expect(ownerBalance).to.equal(maxAirdroppedVans);
 
-    console.log('proof: ', proof);
+    const addresses = [addr1, addr2, addr3, addr4, addr5].map((x) => x.address);
+    await asyncForEach(addresses, async (address, idx) => {
+      const tokenIds = generateTokenIdArray(idx * 10 + 1);
+      console.log(`Transfering tokenIds ${tokenIds} to ${address}`);
+      await kiftVans.connect(owner).airdropTransfer(address, tokenIds);
 
-    const verified = await kiftVans.connect(addr1).verify(proof, claimRoot);
-    console.log('Verified? ', verified);
-    expect(verified).to.equal(true);
+      const balance = await kiftVans.balanceOf(address);
+      console.log(`Wallet ${address} balance after transfer: ${balance}`);
+      expect(balance).to.equal(numToAirdrop);
+    });
 
-    const numToClaim = 5
+    ownerBalance = await kiftVans.balanceOf(owner.address);
+    expect(ownerBalance).to.equal(
+      maxAirdroppedVans - addresses.length * numToAirdrop
+    );
 
-    await kiftVans.connect(addr1).claim(numToClaim, proof);
-
-    balance = await kiftVans.balanceOf(claimAddresses[1]);
-    expect(balance).to.equal(numToClaim);
   });
 });
-
-

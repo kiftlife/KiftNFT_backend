@@ -10,23 +10,21 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-
-// import "@openzeppelin/contracts/utils/Strings.sol";
-// import "@openzeppelin/contracts/interfaces/IERC20.sol";
-// import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
-// import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard {
     using Counters for Counters.Counter;
 
     Counters.Counter private tokenCounter;
 
-    string private baseURI; // ifps root dir
-    // string public verificationHash;
+    string public baseURI; // ifps root dir
+    string private preRevealBaseURI;
+    bool public revealed = false;
 
     uint256 public constant MAX_VANS_PER_WALLET = 10;
     uint256 public maxVans = 9999; // the max total number of vans allowed to be minted across all sales
     uint256 public maxCommunitySaleVans = 8888; // the max number of vans the community sale can mint
+    uint256 public maxAirdroppedVans = 100;
 
     uint256 public constant PUBLIC_SALE_PRICE = 0.12 ether;
     bool public isPublicSaleActive;
@@ -89,23 +87,45 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard {
         _;
     }
 
-    constructor() ERC721("KiftVans", "KIFT") {}
+    constructor(string memory _preRevealURI) ERC721("KiftVans", "KIFT") {
+        setPreRevealUri(_preRevealURI);
+    }
 
-    // ============ DEV-ONLY WHITELIST TESTING ============
+    // ============ DEV-ONLY MERKLE TESTING ============
 
     function verify(bytes32[] calldata proof, bytes32 root)
         public
         view
+        onlyOwner
         returns (bool)
     {
         bytes32 leaf = keccak256(abi.encodePacked(msg.sender));
-
         return MerkleProof.verify(proof, root, leaf);
+    }
+
+    // ============ Airdrop ============
+
+    // a manual/callable airdrop
+    // TODO move this to the constructor
+    function airdropMint() public onlyOwner {
+        for (uint256 i = 0; i < maxAirdroppedVans; i++) {
+            // using _mint saves $5 ($386 vs $391)
+            // TODO use IERC721Receiver to support address(this) instead of msg.sender
+            _safeMint(msg.sender, nextTokenId());
+        }
+    }
+
+    function airdropTransfer(address _to, uint256[] memory _tokenIds)
+        public
+        onlyOwner
+    {
+        for (uint256 i = 0; i < _tokenIds.length; i++) {
+            safeTransferFrom(msg.sender, _to, _tokenIds[i]);
+        }
     }
 
     // ============ PUBLIC FUNCTIONS FOR MINTING ============
 
-    // where metadataUri = https://pinata.cloud/ifps/Qwdskdfa..../1.json
     function mint(uint256 numberOfTokens)
         public
         payable
@@ -118,15 +138,6 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard {
         for (uint256 i = 0; i < numberOfTokens; i++) {
             _safeMint(msg.sender, nextTokenId());
         }
-
-        // uint256 newItemId = tokenCounter.current();
-        // tokenCounter.increment();
-        // existingURIs[metadataURI] = 1;
-
-        // _mint(recipient, newItemId);
-        // _setTokenURI(newItemId, metadataURI);
-
-        // return newItemId;
     }
 
     function mintCommunitySale(
@@ -160,37 +171,34 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard {
         }
     }
 
-    function claim(uint8 numberOfTokens, bytes32[] calldata merkleProof)
-        external
-        isValidMerkleProof(merkleProof, airdropMerkleRoot)
-    {
-        uint256 numAlreadyClaimed = airdropMintCounts[msg.sender];
+    // not used, in favor of airdrop
+    // function claim(uint8 numberOfTokens, bytes32[] calldata merkleProof)
+    //     external
+    //     isValidMerkleProof(merkleProof, airdropMerkleRoot)
+    // {
+    //     uint256 numAlreadyClaimed = airdropMintCounts[msg.sender];
 
-        require(
-            numAlreadyClaimed + numberOfTokens <= MAX_VANS_PER_WALLET,
-            "Max vans to mint in community sale is five"
-        );
+    //     require(
+    //         numAlreadyClaimed + numberOfTokens <= MAX_VANS_PER_WALLET,
+    //         "Max vans to mint in community sale is five"
+    //     );
 
-        require(
-            tokenCounter.current() + numberOfTokens <= maxCommunitySaleVans,
-            "Not enough vans remaining to mint"
-        );
+    //     require(
+    //         tokenCounter.current() + numberOfTokens <= maxCommunitySaleVans,
+    //         "Not enough vans remaining to mint"
+    //     );
 
-        airdropMintCounts[msg.sender] = numAlreadyClaimed + numberOfTokens;
+    //     airdropMintCounts[msg.sender] = numAlreadyClaimed + numberOfTokens;
 
-        for (uint256 i = 0; i < numberOfTokens; i++) {
-            _safeMint(msg.sender, nextTokenId());
-        }
-    }
+    //     for (uint256 i = 0; i < numberOfTokens; i++) {
+    //         _safeMint(msg.sender, nextTokenId());
+    //     }
+    // }
 
     // ============ PUBLIC READ-ONLY FUNCTIONS ============
 
     function getBaseURI() external view returns (string memory) {
         return baseURI;
-    }
-
-    function getLastTokenId() external view returns (uint256) {
-        return tokenCounter.current();
     }
 
     function communitySaleLive() external view returns (bool) {
@@ -201,10 +209,22 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard {
         return isPublicSaleActive;
     }
 
+    function count() public view returns (uint256) {
+        return tokenCounter.current();
+    }
+
     // ============ OWNER-ONLY ADMIN FUNCTIONS ============
 
     function setBaseURI(string memory _baseURI) external onlyOwner {
         baseURI = _baseURI;
+    }
+
+    function setPreRevealUri(string memory _uri) public onlyOwner {
+        preRevealBaseURI = _uri;
+    }
+
+    function reveal() external onlyOwner {
+        revealed = true;
     }
 
     // function to disable gasless listings for security in case
@@ -230,20 +250,26 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard {
         isCommunitySaleActive = _isCommunitySaleActive;
     }
 
-    function setCommunityListMerkleRoot(bytes32 merkleRoot) external onlyOwner {
-        communityListMerkleRoot = merkleRoot;
+    function setCommunityListMerkleRoot(bytes32 _merkleRoot)
+        external
+        onlyOwner
+    {
+        communityListMerkleRoot = _merkleRoot;
     }
 
-    function setAirdropListMerkleRoot(bytes32 merkleRoot) external onlyOwner {
-        airdropMerkleRoot = merkleRoot;
+    function setAirdropListMerkleRoot(bytes32 _merkleRoot) external onlyOwner {
+        airdropMerkleRoot = _merkleRoot;
     }
 
-    function count() public view returns (uint256) {
-        return tokenCounter.current();
+    function isContentOwned(string memory _uri) public view returns (bool) {
+        return existingURIs[_uri] == 1;
     }
 
-    function isContentOwned(string memory uri) public view returns (bool) {
-        return existingURIs[uri] == 1;
+    function withdraw() public payable onlyOwner {
+        (bool success, ) = payable(msg.sender).call{
+            value: address(this).balance
+        }("");
+        require(success);
     }
 
     // ============ SUPPORTING FUNCTIONS ============
@@ -254,36 +280,41 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard {
     }
 
     // ============ FUNCTION OVERRIDES ============
-    function _burn(uint256 tokenId) internal override(ERC721) {
-        super._burn(tokenId);
+    function _burn(uint256 _tokenId) internal override(ERC721) {
+        super._burn(_tokenId);
     }
 
     /**
      * @dev See {IERC721Metadata-tokenURI}.
      */
-    function tokenURI(uint256 tokenId)
+    function tokenURI(uint256 _tokenId)
         public
         view
         virtual
         override
         returns (string memory)
     {
-        require(_exists(tokenId), "Nonexistent token");
+        require(_exists(_tokenId), "Nonexistent token");
 
-        return string(abi.encodePacked(baseURI, "/", tokenId, ".json"));
+        if (revealed == false) {
+            return preRevealBaseURI;
+        }
+
+        return string(abi.encodePacked(baseURI, "/", Strings.toString(_tokenId), ".json"));
     }
 
     /**
+     * on chain royalties
      * @dev See {IERC165-royaltyInfo}.
      */
-    function royaltyInfo(uint256 tokenId, uint256 salePrice)
+    function royaltyInfo(uint256 _tokenId, uint256 _salePrice)
         external
         view
         override
         returns (address receiver, uint256 royaltyAmount)
     {
-        require(_exists(tokenId), "Nonexistent token");
+        require(_exists(_tokenId), "Nonexistent token");
 
-        return (address(this), SafeMath.div(SafeMath.mul(salePrice, 5), 100));
+        return (address(this), SafeMath.div(SafeMath.mul(_salePrice, 5), 100));
     }
 }
