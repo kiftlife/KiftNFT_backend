@@ -28,7 +28,7 @@ export ALCHEMY_API_KEY=api for using alchemy
 ### Deploy & Interact
 
 1. `npx hardhat run scripts/deploy.js --network polygon_mumbai`
-2. `npx hardhat run scripts/interact_<insert in order>.js`
+2. `npx hardhat run scripts/<step>_interact.js`
 
 ^^ run these from the root dir
 

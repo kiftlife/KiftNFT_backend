@@ -15,11 +15,11 @@ const airdropDevAddresses = [
 
   const airdropTestAddresses = [
     '0x93E40A70115C9EfC67f817BfC62717d8Ab66C720',     // brad
-    '0x3F297A7f5631EEeF286c2a636c92c26789e5DE4D'      //sante
+    '0xF912DF89aFD526B451bF50fA7c0477bCe1A7b10A'      //sante
   ];
   const communityTestAddresses = [
     '0x93E40A70115C9EfC67f817BfC62717d8Ab66C720',     // brad
-    '0x3F297A7f5631EEeF286c2a636c92c26789e5DE4D'      //sante
+    '0xF912DF89aFD526B451bF50fA7c0477bCe1A7b10A'      //sante
   ];
 
   const airdropProdAddresses = [];
