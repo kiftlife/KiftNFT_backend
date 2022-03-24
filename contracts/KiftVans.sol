@@ -89,6 +89,7 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard {
 
     constructor(string memory _preRevealURI) ERC721("KiftVans", "KIFT") {
         setPreRevealUri(_preRevealURI);
+        airdropMint();
     }
 
     // ============ DEV-ONLY MERKLE TESTING ============
@@ -105,8 +106,6 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard {
 
     // ============ Airdrop ============
 
-    // a manual/callable airdrop
-    // TODO move this to the constructor
     function airdropMint() public onlyOwner {
         for (uint256 i = 0; i < maxAirdroppedVans; i++) {
             // using _mint saves $5 ($386 vs $391)
@@ -225,6 +224,11 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard {
 
     function reveal() external onlyOwner {
         revealed = true;
+    }
+
+    // DEV testing only. remove for prod
+    function toggleReveal(bool _revealed) external onlyOwner {
+        revealed = _revealed;
     }
 
     // function to disable gasless listings for security in case
