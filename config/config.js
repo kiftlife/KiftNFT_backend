@@ -1,6 +1,6 @@
 
 const BASE_PREREVEAL_URL = `https://gateway.pinata.cloud/ipfs/QmR44zZLLBMwygbw9FCZpnvCsedooYM9VfKRhJhw5LwvE3`
-const IPFS_BASE_URL = `https://gateway.pinata.cloud/ipfs/QmNbpCqZhXVLhddRSapVtST5jkvxo2VAJ4WtT5U7PyR8pt`
+const IPFS_BASE_URL = `https://gateway.pinata.cloud/ipfs/QmcL4aJCM4WATiyo75wnAs2E7J6JRmnpPVbfxuk1za66VX`
 
 const airdropDevAddresses = [
     '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
