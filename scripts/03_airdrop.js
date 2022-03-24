@@ -1,7 +1,7 @@
 const { ethers } = require('hardhat');
 require('dotenv').config();
 const contract = require('../src/artifacts/contracts/KiftVans.sol/KiftVans.json');
-const { airdropTestAddresses } = require('../config/config');
+const { testAddresses } = require('../config/config');
 const { ALCHEMY_API_KEY, PRIVATE_KEY, CONTRACT_ADDRESS, TEST_WALLET_OWNER } =
   process.env;
 const alchemyProvider = new ethers.providers.AlchemyProvider(
@@ -15,8 +15,10 @@ const kiftContract = new ethers.Contract(
   signer
 );
 
+const NUM_TO_AIRDROP = 5;
+
 function generateTokenIdArray(start) {
-  return Array.from({ length: 10 }, (_, i) => i + start);
+  return Array.from({ length: NUM_TO_AIRDROP }, (_, i) => i + start);
 }
 
 async function asyncForEach(array, callback) {
@@ -33,10 +35,10 @@ async function main() {
   let balance = await kiftContract.balanceOf(TEST_WALLET_OWNER);
   console.log('Balance of owner contract after airdrop: ', balance.toString());
 
-  console.log('Addresses to send: ', airdropTestAddresses)
+  console.log('Addresses to send: ', testAddresses)
 
-  await asyncForEach(airdropTestAddresses, async (address, idx) => {
-    const tokenIds = generateTokenIdArray(idx * 10 + 1);
+  await asyncForEach(testAddresses, async (address, idx) => {
+    const tokenIds = generateTokenIdArray(idx * NUM_TO_AIRDROP + 1);      // tokenIds base 1, not 0
     console.log(`Transfering tokenIds ${tokenIds} to ${address}`);
     const tx = await kiftContract.airdropTransfer(address, tokenIds);
     const receipt = await tx.wait();
