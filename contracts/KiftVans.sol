@@ -35,7 +35,7 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard {
     bytes32 public airdropMerkleRoot;
     bytes32 public communityListMerkleRoot;
 
-    mapping(string => uint8) existingURIs;
+    mapping(string => uint8) existingURIs;      // not currently implemented
     mapping(address => uint256) public communityMintCounts;
     mapping(address => uint256) public airdropMintCounts;
 
@@ -265,6 +265,7 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard {
         airdropMerkleRoot = _merkleRoot;
     }
 
+    // TODO currently defaulting back to reverse check using ownerOf(tokenId)
     function isContentOwned(string memory _uri) public view returns (bool) {
         return existingURIs[_uri] == 1;
     }
