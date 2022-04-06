@@ -19,7 +19,7 @@ async function main() {
     const preRevealUrl = await kiftContract.tokenURI(1);
     console.log('Pre-reveal URL: ', preRevealUrl);
     
-    const tx = await kiftContract.toggleReveal(true);
+    const tx = await kiftContract.reveal();
     const receipt = await tx.wait();
     const { transactionIndex, blockHash, transactionHash } = receipt;
     console.log(`REVEAL THE METADATA complete: `, {
