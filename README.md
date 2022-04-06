@@ -19,7 +19,7 @@ To run locally:
 ```
 export COINMARKETCAP_KEY=get from coinmarketcap
 export PRIVATE_KEY=contract signer wallet private key
-export ALCHEMY_POLYGON_API_URL=polygon url
+export ALCHEMY_RINKEBY_API_URL=rinkeby alchemy url
 export CONTRACT_ADDRESS=deployed contract wallet
 export ALCHEMY_API_KEY=api for using alchemy
 ```
@@ -27,7 +27,7 @@ export ALCHEMY_API_KEY=api for using alchemy
 ---
 ### Deploy & Interact
 
-1. `npx hardhat run scripts/deploy.js --network polygon_mumbai`
+1. `npx hardhat run scripts/00_deploy.js --network rinkeby`
 2. `npx hardhat run scripts/<step>_interact.js`
 
 ^^ run these from the root dir

@@ -2,7 +2,7 @@ require('@nomiclabs/hardhat-waffle');
 require('hardhat-gas-reporter');
 require('dotenv').config();
 
-const { ALCHEMY_POLYGON_API_URL, PRIVATE_KEY, COINMARKETCAP_KEY } = process.env;
+const { ALCHEMY_POLYGON_API_URL, ALCHEMY_RINKEBY_API_URL, PRIVATE_KEY, COINMARKETCAP_KEY } = process.env;
 
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
@@ -28,6 +28,10 @@ module.exports = {
   networks: {
     hardhat: {
       chainId: 1337
+    },
+    rinkeby: {
+      url: ALCHEMY_RINKEBY_API_URL,
+      accounts: [PRIVATE_KEY]
     },
     polygon_mumbai: {
       url: ALCHEMY_POLYGON_API_URL,

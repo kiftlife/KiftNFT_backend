@@ -21,6 +21,7 @@ const airdropDevAddresses = [
     '0x025B62EB00120e340B30F8c7Ba0f3b20392edA90',     // mo
     '0xc0c385e74C47e19302Be184Af3379fc21FBf079B',     // cam
     '0xc2B27c40D37d1d8338525656D5570A397Bc155E5',     // colin
+    '0x8061c137db2c1a1906d7f22e4d57ab8e32f682c6',     // david
   ];
 
 
