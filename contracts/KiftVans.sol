@@ -246,21 +246,6 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard, VRFConsumerBase
         revealed = true;
     }
 
-    function revealNew() external onlyOwner {
-        for (uint256 i = revealedUpTo; i < tokenCounter.current(); i++) {
-            uint256 randomMetadataId = 0;
-            uint256 nonce = 0;
-            while (metadataToToken[randomMetadataId] == 0) {
-                while (metadataToToken[
-                randomMetadataId = keccak256(abi.encodePacked(revealRandomness, message.sender, i, nonce)) % 10000;
-                nonce++;
-            }
-            tokenToMetadata[i] = randomMetadataId;
-            metadataToToken[
-        }
-        revealedUpTo = tokenCounter.current();
-    }
-
     // DEV testing only. remove for prod
     function toggleReveal(bool _revealed) external onlyOwner {
         revealed = _revealed;
