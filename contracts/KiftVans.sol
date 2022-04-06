@@ -12,14 +12,21 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
-contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard {
+import "@chainlink/contracts/src/v0.8/VRFConsumerBase.sol";
+import "BatchReveal.sol";
+
+contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard, VRFConsumerBase, BatchReveal {
     using Counters for Counters.Counter;
 
     Counters.Counter private tokenCounter;
 
     string public baseURI; // ifps root dir
     string private preRevealBaseURI;
-    bool public revealed = false;
+
+    mapping(uint256 => uint256) tokenToMetadata;
+    mapping(uint256 => uint256) metadataToToken;
+    uint256 public revealRandomness; // populate w/ chainlink
+    uint256 public revealedUpTo = 1; // token 0 maps to metadata 0 for simplicity
 
     uint256 public constant MAX_VANS_PER_WALLET = 5;
     uint256 public maxVans = 10000;
@@ -39,6 +46,11 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard {
     mapping(string => uint8) existingURIs; // not currently implemented
     mapping(address => uint256) public communityMintCounts;
     mapping(address => uint256) public airdropMintCounts;
+
+    // Constants from https://docs.chain.link/docs/vrf-contracts/
+    bytes32 immutable private s_keyHash;
+    address immutable private linkToken;
+    address immutable private linkCoordinator;
 
     // ============ ACCESS CONTROL/SANITY MODIFIERS ============
 
@@ -88,7 +100,14 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard {
         _;
     }
 
-    constructor(string memory _preRevealURI) ERC721("KiftVans", "KIFT") {
+    constructor(string memory _preRevealURI, bytes32 _s_keyHash, address _linkToken, address _linkCoordinator) 
+        ERC721("KiftVans", "KIFT") 
+        VRFConsumerBase(_linkCoordinator, _linkToken) {
+        
+        linkToken = _linkToken;
+        linkCoordinator = _linkCoordinator;
+        s_keyHash = _s_keyHash;
+
         setPreRevealUri(_preRevealURI);
         airdropMint();
     }
@@ -227,6 +246,21 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard {
         revealed = true;
     }
 
+    function revealNew() external onlyOwner {
+        for (uint256 i = revealedUpTo; i < tokenCounter.current(); i++) {
+            uint256 randomMetadataId = 0;
+            uint256 nonce = 0;
+            while (metadataToToken[randomMetadataId] == 0) {
+                while (metadataToToken[
+                randomMetadataId = keccak256(abi.encodePacked(revealRandomness, message.sender, i, nonce)) % 10000;
+                nonce++;
+            }
+            tokenToMetadata[i] = randomMetadataId;
+            metadataToToken[
+        }
+        revealedUpTo = tokenCounter.current();
+    }
+
     // DEV testing only. remove for prod
     function toggleReveal(bool _revealed) external onlyOwner {
         revealed = _revealed;
@@ -278,6 +312,25 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard {
         require(success);
     }
 
+    // ============ CHAINLINK FUNCTIONS ============
+
+    // batchNumber belongs to [0, TOKEN_LIMIT/REVEAL_BATCH_SIZE]
+    // if fee is incorrect chainlink's coordinator will just revert the tx so it's good
+    function requestRandomSeed(uint s_fee) public returns (bytes32 requestId) {
+        require(totalSupply >= (lastTokenRevealed + REVEAL_BATCH_SIZE), "totalSupply too low");
+
+        // checking LINK balance
+        require(IERC20(linkToken).balanceOf(address(this)) >= s_fee, "Not enough LINK to pay fee");
+
+        // requesting randomness
+        requestId = requestRandomness(s_keyHash, s_fee);
+    }
+
+    function fulfillRandomness(bytes32, uint256 randomness) internal override {
+        require(totalSupply >= (lastTokenRevealed + REVEAL_BATCH_SIZE), "totalSupply too low");
+        setBatchSeed(randomness);
+    }
+
     // ============ SUPPORTING FUNCTIONS ============
 
     function nextTokenId() private returns (uint256) {
@@ -302,7 +355,7 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard {
     {
         require(_exists(_tokenId), "Nonexistent token");
 
-        if (revealed == false) {
+        if (id >= lastTokenRevealed) {
             return preRevealBaseURI;
         }
 
@@ -311,7 +364,7 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard {
                 abi.encodePacked(
                     baseURI,
                     "/",
-                    Strings.toString(_tokenId),
+                    getShuffledTokenId(_tokenId).toString(),
                     ".json"
                 )
             );
