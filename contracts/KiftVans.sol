@@ -21,21 +21,22 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard {
     string private preRevealBaseURI;
     bool public revealed = false;
 
-    uint256 public constant MAX_VANS_PER_WALLET = 10;
-    uint256 public maxVans = 9999; // the max total number of vans allowed to be minted across all sales
-    uint256 public maxCommunitySaleVans = 8888; // the max number of vans the community sale can mint
+    uint256 public constant MAX_VANS_PER_WALLET = 5;
+    uint256 public maxVans = 10000;
+    uint256 public maxCommunitySaleVans = 7000;
+    uint256 public maxTreasuryVans = 900;
     uint256 public maxAirdroppedVans = 100;
 
-    uint256 public constant PUBLIC_SALE_PRICE = 0.12 ether;
+    uint256 public constant PUBLIC_SALE_PRICE = 0.10 ether;
     bool public isPublicSaleActive;
 
-    uint256 public constant COMMUNITY_SALE_PRICE = 0.1 ether;
+    uint256 public constant COMMUNITY_SALE_PRICE = 0.08 ether;
     bool public isCommunitySaleActive;
 
     bytes32 public airdropMerkleRoot;
     bytes32 public communityListMerkleRoot;
 
-    mapping(string => uint8) existingURIs;      // not currently implemented
+    mapping(string => uint8) existingURIs; // not currently implemented
     mapping(address => uint256) public communityMintCounts;
     mapping(address => uint256) public airdropMintCounts;
 
