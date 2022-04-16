@@ -23,8 +23,6 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard, VRFConsumerBase
     string public baseURI; // ifps root dir
     string private preRevealBaseURI;
 
-    mapping(uint256 => uint256) tokenToMetadata;
-    mapping(uint256 => uint256) metadataToToken;
     uint256 public revealRandomness; // populate w/ chainlink
     uint256 public revealedUpTo = 1; // token 0 maps to metadata 0 for simplicity
 
