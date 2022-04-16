@@ -14,7 +14,7 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 
 import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
-import "BatchReveal.sol";
+import "./BatchReveal.sol";
 
 contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard, VRFConsumerBaseV2, BatchReveal {
     using Counters for Counters.Counter;
@@ -240,15 +240,6 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard, VRFConsumerBase
 
     function setPreRevealUri(string memory _uri) public onlyOwner {
         preRevealBaseURI = _uri;
-    }
-
-    function reveal() external onlyOwner {
-        revealed = true;
-    }
-
-    // DEV testing only. remove for prod
-    function toggleReveal(bool _revealed) external onlyOwner {
-        revealed = _revealed;
     }
 
     // function to disable gasless listings for security in case
