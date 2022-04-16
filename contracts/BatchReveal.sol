@@ -1,16 +1,13 @@
-//SPDX-License-Identifier: CC0
 pragma solidity ^0.8.2;
 
-/*
-  See ../../randomness.md
-*/
 abstract contract BatchReveal {
-    uint constant public TOKEN_LIMIT = 10e3;
-    uint constant public REVEAL_BATCH_SIZE = 1e3;
+    uint constant public TOKEN_LIMIT = 9900;
+    uint constant public REVEAL_BATCH_SIZE = 900;
+    uint constant public CONTRIBUTOR_OFFSET = 100;
     mapping(uint => uint) public batchToSeed;
-    uint public lastTokenRevealed = 0;
+    uint public lastTokenRevealed = 0; // in [0-9900]. offset not included
 
-    struct Range{
+    struct Range {
         int128 start;
         int128 end;
     }
@@ -70,10 +67,12 @@ abstract contract BatchReveal {
     }
 
     function getShuffledTokenId(uint startId) view internal returns (uint) {
+        if (startId < CONTRIBUTOR_OFFSET) return startId;
+
         uint batch = startId/REVEAL_BATCH_SIZE;
         Range[RANGE_LENGTH] memory ranges = buildJumps(batch);
         uint positionsToMove = (startId % REVEAL_BATCH_SIZE) + batchToSeed[batch];
-        return getFreeTokenId(positionsToMove, ranges);
+        return CONTRIBUTOR_OFFSET + getFreeTokenId(positionsToMove, ranges);
     }
 
     function getFreeTokenId(uint positionsToMoveStart, Range[RANGE_LENGTH] memory ranges) pure private returns (uint) {
