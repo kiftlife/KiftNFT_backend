@@ -12,14 +12,17 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
-contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard {
+import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
+import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
+import "./BatchReveal.sol";
+
+contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard, VRFConsumerBaseV2, BatchReveal {
     using Counters for Counters.Counter;
 
     Counters.Counter private tokenCounter;
 
     string public baseURI; // ifps root dir
     string private preRevealBaseURI;
-    bool public revealed = false;
 
     uint256 public constant MAX_VANS_PER_WALLET = 5;
     uint256 public maxVans = 10000;
@@ -39,6 +42,11 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard {
     mapping(string => uint8) existingURIs; // not currently implemented
     mapping(address => uint256) public communityMintCounts;
     mapping(address => uint256) public airdropMintCounts;
+
+    // Constants from https://docs.chain.link/docs/vrf-contracts/
+    VRFCoordinatorV2Interface COORDINATOR;
+    bytes32 immutable private s_keyHash;
+    uint64 immutable private s_subscriptionId;
 
     // ============ ACCESS CONTROL/SANITY MODIFIERS ============
 
@@ -88,7 +96,15 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard {
         _;
     }
 
-    constructor(string memory _preRevealURI) ERC721("KiftVans", "KIFT") {
+    constructor(string memory _preRevealURI, bytes32 _s_keyHash, address _vrfCoordinator, uint64 _s_subscriptionId) 
+        ERC721("KiftVans", "KIFT") 
+        VRFConsumerBaseV2(_vrfCoordinator) {
+        
+        COORDINATOR = VRFCoordinatorV2Interface(_vrfCoordinator);
+
+        s_keyHash = _s_keyHash;
+        s_subscriptionId = _s_subscriptionId;
+
         setPreRevealUri(_preRevealURI);
         airdropMint();
     }
@@ -223,15 +239,6 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard {
         preRevealBaseURI = _uri;
     }
 
-    function reveal() external onlyOwner {
-        revealed = true;
-    }
-
-    // DEV testing only. remove for prod
-    function toggleReveal(bool _revealed) external onlyOwner {
-        revealed = _revealed;
-    }
-
     // function to disable gasless listings for security in case
     // opensea ever shuts down or is compromised
     // function setIsOpenSeaProxyActive(bool _isOpenSeaProxyActive)
@@ -278,6 +285,27 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard {
         require(success);
     }
 
+    // ============ CHAINLINK FUNCTIONS ============
+
+    // batchNumber belongs to [0, TOKEN_LIMIT/REVEAL_BATCH_SIZE]
+    function revealNextBatch() public {
+        require(totalSupply >= (CONTRIBUTOR_OFFSET + lastTokenRevealed + REVEAL_BATCH_SIZE), "totalSupply too low");
+
+        // requesting randomness
+        COORDINATOR.requestRandomWords(
+            s_keyHash,
+            s_subscriptionId,
+            3, // requestConfirmations
+            100000, // callbackGasLimit
+            1 // numWords
+        );
+    }
+
+    function fulfillRandomWords(uint256 /* requestId */, uint256[] memory randomWords) internal override {
+        require(totalSupply >= (CONTRIBUTOR_OFFSET + lastTokenRevealed + REVEAL_BATCH_SIZE), "totalSupply too low");
+        setBatchSeed(randomWords[0]);
+    }
+
     // ============ SUPPORTING FUNCTIONS ============
 
     function nextTokenId() private returns (uint256) {
@@ -302,7 +330,7 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard {
     {
         require(_exists(_tokenId), "Nonexistent token");
 
-        if (revealed == false) {
+        if (id >= CONTRIBUTOR_OFFSET + lastTokenRevealed) {
             return preRevealBaseURI;
         }
 
@@ -311,7 +339,7 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard {
                 abi.encodePacked(
                     baseURI,
                     "/",
-                    Strings.toString(_tokenId),
+                    getShuffledTokenId(_tokenId).toString(),
                     ".json"
                 )
             );
