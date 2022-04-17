@@ -16,7 +16,14 @@ import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
 import "./BatchReveal.sol";
 
-contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard, VRFConsumerBaseV2, BatchReveal {
+contract Kiftables is
+    ERC721,
+    IERC2981,
+    Ownable,
+    ReentrancyGuard,
+    VRFConsumerBaseV2,
+    BatchReveal
+{
     using Counters for Counters.Counter;
 
     Counters.Counter private tokenCounter;
@@ -26,6 +33,7 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard, VRFConsumerBase
 
     uint256 public constant MAX_VANS_PER_WALLET = 5;
     uint256 public maxVans = 10000;
+    uint256 public totalSupply = 10000;
     uint256 public maxCommunitySaleVans = 7000;
     uint256 public maxTreasuryVans = 900;
     uint256 public maxAirdroppedVans = 100;
@@ -45,8 +53,8 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard, VRFConsumerBase
 
     // Constants from https://docs.chain.link/docs/vrf-contracts/
     VRFCoordinatorV2Interface COORDINATOR;
-    bytes32 immutable private s_keyHash;
-    uint64 immutable private s_subscriptionId;
+    bytes32 private immutable s_keyHash;
+    uint64 private immutable s_subscriptionId;
 
     // ============ ACCESS CONTROL/SANITY MODIFIERS ============
 
@@ -96,10 +104,12 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard, VRFConsumerBase
         _;
     }
 
-    constructor(string memory _preRevealURI, bytes32 _s_keyHash, address _vrfCoordinator, uint64 _s_subscriptionId) 
-        ERC721("KiftVans", "KIFT") 
-        VRFConsumerBaseV2(_vrfCoordinator) {
-        
+    constructor(
+        string memory _preRevealURI,
+        bytes32 _s_keyHash,
+        address _vrfCoordinator,
+        uint64 _s_subscriptionId
+    ) ERC721("Kiftables", "KIFT") VRFConsumerBaseV2(_vrfCoordinator) {
         COORDINATOR = VRFCoordinatorV2Interface(_vrfCoordinator);
 
         s_keyHash = _s_keyHash;
@@ -289,7 +299,11 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard, VRFConsumerBase
 
     // batchNumber belongs to [0, TOKEN_LIMIT/REVEAL_BATCH_SIZE]
     function revealNextBatch() public {
-        require(totalSupply >= (CONTRIBUTOR_OFFSET + lastTokenRevealed + REVEAL_BATCH_SIZE), "totalSupply too low");
+        require(
+            totalSupply >=
+                (CONTRIBUTOR_OFFSET + lastTokenRevealed + REVEAL_BATCH_SIZE),
+            "totalSupply too low"
+        );
 
         // requesting randomness
         COORDINATOR.requestRandomWords(
@@ -301,8 +315,15 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard, VRFConsumerBase
         );
     }
 
-    function fulfillRandomWords(uint256 /* requestId */, uint256[] memory randomWords) internal override {
-        require(totalSupply >= (CONTRIBUTOR_OFFSET + lastTokenRevealed + REVEAL_BATCH_SIZE), "totalSupply too low");
+    function fulfillRandomWords(
+        uint256, /* requestId */
+        uint256[] memory randomWords
+    ) internal override {
+        require(
+            totalSupply >=
+                (CONTRIBUTOR_OFFSET + lastTokenRevealed + REVEAL_BATCH_SIZE),
+            "totalSupply too low"
+        );
         setBatchSeed(randomWords[0]);
     }
 
@@ -330,7 +351,7 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard, VRFConsumerBase
     {
         require(_exists(_tokenId), "Nonexistent token");
 
-        if (id >= CONTRIBUTOR_OFFSET + lastTokenRevealed) {
+        if (_tokenId >= CONTRIBUTOR_OFFSET + lastTokenRevealed) {
             return preRevealBaseURI;
         }
 
@@ -339,7 +360,7 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard, VRFConsumerBase
                 abi.encodePacked(
                     baseURI,
                     "/",
-                    getShuffledTokenId(_tokenId).toString(),
+                    getShuffledTokenId(_tokenId),
                     ".json"
                 )
             );

@@ -1,6 +1,6 @@
 const { ethers } = require('hardhat');
 require('dotenv').config();
-const contract = require('../src/artifacts/contracts/KiftVans.sol/KiftVans.json');
+const contract = require('../src/artifacts/contracts/Kiftables.sol/Kiftables.json');
 const { testAddresses } = require('../config/config');
 const { ALCHEMY_API_KEY, PRIVATE_KEY, CONTRACT_ADDRESS, TEST_WALLET_OWNER } =
   process.env;

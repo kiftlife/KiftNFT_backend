@@ -7,7 +7,7 @@
  
  const { ALCHEMY_API_KEY, PRIVATE_KEY, CONTRACT_ADDRESS } = process.env;
  
- const contract = require('../src/artifacts/contracts/KiftVans.sol/KiftVans.json');
+ const contract = require('../src/artifacts/contracts/Kiftables.sol/Kiftables.json');
  const alchemyProvider = new ethers.providers.AlchemyProvider(
    (network = 'maticmum'),
    ALCHEMY_API_KEY

@@ -2,6 +2,10 @@
 const BASE_PREREVEAL_URL = `https://gateway.pinata.cloud/ipfs/QmR44zZLLBMwygbw9FCZpnvCsedooYM9VfKRhJhw5LwvE3`
 const IPFS_BASE_URL = `https://gateway.pinata.cloud/ipfs/QmcL4aJCM4WATiyo75wnAs2E7J6JRmnpPVbfxuk1za66VX`
 
+
+const CHAINLINK_SUB_ID = '2879'
+const CHAINLINK_KEY_HASH = '0xd89b2bf150e3b9e13446986e571fb9cab24b13cea0a43ea20a6049a85cc807cc'
+
 const airdropDevAddresses = [
     '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
     '0x70997970c51812dc3a010c7d01b50e0d17dc79c8'
@@ -35,5 +39,7 @@ const airdropDevAddresses = [
     communityDevAddresses,
     testAddresses,
     airdropProdAddresses,
-    communityProdAddresses
+    communityProdAddresses,
+    CHAINLINK_SUB_ID,
+    CHAINLINK_KEY_HASH
   }

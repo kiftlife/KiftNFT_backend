@@ -19,31 +19,31 @@ describe('Airdrop', function () {
     const [owner, addr1, addr2, addr3, addr4, addr5] =
       await ethers.getSigners();
 
-    const kiftVans = await (
-      await ethers.getContractFactory('KiftVans')
+    const kiftables = await (
+      await ethers.getContractFactory('Kiftables')
     ).deploy(BASE_PREREVEAL_URL);
 
-    await kiftVans.deployed();
-    await kiftVans.connect(owner).airdropMint();
+    await kiftables.deployed();
+    await kiftables.connect(owner).airdropMint();
 
     const maxAirdroppedVans = 100;
     const numToAirdrop = 10;
 
-    let ownerBalance = await kiftVans.balanceOf(owner.address);
+    let ownerBalance = await kiftables.balanceOf(owner.address);
     expect(ownerBalance).to.equal(maxAirdroppedVans);
 
     const addresses = [addr1, addr2, addr3, addr4, addr5].map((x) => x.address);
     await asyncForEach(addresses, async (address, idx) => {
       const tokenIds = generateTokenIdArray(idx * 10 + 1);
       console.log(`Transfering tokenIds ${tokenIds} to ${address}`);
-      await kiftVans.connect(owner).airdropTransfer(address, tokenIds);
+      await kiftables.connect(owner).airdropTransfer(address, tokenIds);
 
-      const balance = await kiftVans.balanceOf(address);
+      const balance = await kiftables.balanceOf(address);
       console.log(`Wallet ${address} balance after transfer: ${balance}`);
       expect(balance).to.equal(numToAirdrop);
     });
 
-    ownerBalance = await kiftVans.balanceOf(owner.address);
+    ownerBalance = await kiftables.balanceOf(owner.address);
     expect(ownerBalance).to.equal(
       maxAirdroppedVans - addresses.length * numToAirdrop
     );
