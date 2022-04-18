@@ -58,27 +58,49 @@ describe('BatchReveal', async () => {
     // 100 tokens minted in constructor. Mint another 801 so we're at 901
     // 1 batch of 900
     // 1 over into second, un-revealed batch
-    const tokenCount = 900
-
-    const amount = (0.10 * tokenCount).toString();
+    let mintCount = 900
+    let amount = (0.10 * mintCount).toString();
     console.log('Amount: ', amount)
     await kiftContract.setIsPublicSaleActive(true);
-    await kiftContract.connect(addr1).mint(tokenCount, {
+    await kiftContract.connect(addr1).mint(mintCount, {
       value: ethers.utils.parseEther(amount)
     });
 
     balance = await kiftContract.balanceOf(addr1.address);
     console.log('Addr1 bal: ', balance.toString());
 
-    const tx = await kiftContract.revealNextBatch();
-    await tx.wait();
+    const tx0 = await kiftContract.revealNextBatch();
+    await tx0.wait();
 
-    let seed = await kiftContract.getSeedForBatch(1)
-    console.log('Seed: ', seed.toString())
-    // TODO figure out why this never gets populated....
+    let seed0 = await kiftContract.getSeedForBatch(0)
+    console.log('Seed0: ', seed0.toString())
 
     // 1,2,3,899,900 should return a shuffled ID, 901 should not
     await asyncForEach([1,2,3, 900, 901, 1000], async (id, idx) => {
+        let uri = await kiftContract.tokenURI(id);
+        let shuffledId = await kiftContract.getShuffledTokenId(id);
+        console.log(`Uri for :: ${id} :: ${shuffledId} :: ${uri}`);
+      });
+
+
+      mintCount = 900
+      amount = (0.10 * mintCount).toString();
+      console.log('Amount: ', amount)
+      await kiftContract.setIsPublicSaleActive(true);
+      await kiftContract.connect(addr1).mint(mintCount, {
+        value: ethers.utils.parseEther(amount)
+      });
+  
+      balance = await kiftContract.balanceOf(addr1.address);
+      console.log('Addr1 bal: ', balance.toString());
+  
+      const tx1 = await kiftContract.revealNextBatch();
+      await tx1.wait();
+  
+      let seed1 = await kiftContract.getSeedForBatch(1)
+      console.log('Seed1: ', seed1.toString())
+
+      await asyncForEach([1,2,3, 900, 901, 1000, 1001, 1899, 1900, 1901], async (id, idx) => {
         let uri = await kiftContract.tokenURI(id);
         let shuffledId = await kiftContract.getShuffledTokenId(id);
         console.log(`Uri for :: ${id} :: ${shuffledId} :: ${uri}`);
