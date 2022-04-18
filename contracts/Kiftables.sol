@@ -355,6 +355,18 @@ contract Kiftables is
             return preRevealBaseURI;
         }
 
+        if (_tokenId <= CONTRIBUTOR_OFFSET) {
+            return
+                string(
+                    abi.encodePacked(
+                        baseURI,
+                        "/",
+                        Strings.toString(_tokenId),
+                        ".json"
+                    )
+                );
+        }
+
         return
             string(
                 abi.encodePacked(
