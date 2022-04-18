@@ -77,8 +77,9 @@ abstract contract BatchReveal {
         return ranges;
     }
 
+    // set back to internal from public when out of dev
     function getShuffledTokenId(uint256 startId)
-        internal
+        public 
         view
         returns (uint256)
     {

@@ -78,9 +78,10 @@ describe('BatchReveal', async () => {
     // TODO figure out why this never gets populated....
 
     // 1,2,3,899,900 should return a shuffled ID, 901 should not
-    await asyncForEach([1,2,3], async (id, idx) => {
+    await asyncForEach([1,2,3, 900, 901, 1000], async (id, idx) => {
         let uri = await kiftContract.tokenURI(id);
-        console.log(`Uri for :: ${id} :: ${uri}`);
+        let shuffledId = await kiftContract.getShuffledTokenId(id);
+        console.log(`Uri for :: ${id} :: ${shuffledId} :: ${uri}`);
       });
 
     // TODO confirm metadata uri is revealed for token 1-1000;

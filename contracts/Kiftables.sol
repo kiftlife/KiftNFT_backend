@@ -360,7 +360,7 @@ contract Kiftables is
                 abi.encodePacked(
                     baseURI,
                     "/",
-                    getShuffledTokenId(_tokenId),
+                    Strings.toString(getShuffledTokenId(_tokenId)),
                     ".json"
                 )
             );
