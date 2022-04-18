@@ -31,7 +31,7 @@ contract Kiftables is
     string public baseURI; // ifps root dir
     string private preRevealBaseURI;
 
-    uint256 public constant MAX_VANS_PER_WALLET = 5;
+    uint256 public constant MAX_VANS_PER_WALLET = 5000; // set back to 5 after dev
     uint256 public maxVans = 10000;
     uint256 public totalSupply = 10000;
     uint256 public maxCommunitySaleVans = 7000;

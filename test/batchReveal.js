@@ -1,7 +1,6 @@
 const { expect } = require('chai');
 const { ethers } = require('hardhat');
 const { BASE_PREREVEAL_URL, CHAINLINK_KEY_HASH } = require('../config/config');
-const { constants } = ethers;
 
 function generateTokenIdArray(start) {
   return Array.from({ length: 10 }, (_, i) => i + start);
@@ -47,36 +46,44 @@ describe('BatchReveal', async () => {
     console.log('KiftContract: ', kiftContract.address);
     // end deploy
 
-    // check airdrop
-    const maxAirdroppedVans = 100;
-    const numToAirdrop = 10;
-
-    let ownerBalance = await kiftContract.balanceOf(owner.address);
-    expect(ownerBalance).to.equal(maxAirdroppedVans);
-
-    const addresses = [addr1, addr2, addr3, addr4, addr5].map((x) => x.address);
-    await asyncForEach(addresses, async (address, idx) => {
-      const tokenIds = generateTokenIdArray(idx * 10 + 1);
-      console.log(`Transfering tokenIds ${tokenIds} to ${address}`);
-      await kiftContract.connect(owner).airdropTransfer(address, tokenIds);
-
-      const balance = await kiftContract.balanceOf(address);
-      console.log(`Wallet ${address} balance after transfer: ${balance}`);
-      expect(balance).to.equal(numToAirdrop);
+    // confirm metadata isnt revealed yet
+    const firstTen = generateTokenIdArray(1);
+    await asyncForEach(firstTen, async (id, idx) => {
+      let uri = await kiftContract.tokenURI(id);
+      console.log(`Uri for :: ${id} :: ${uri}`);
     });
 
-    ownerBalance = await kiftContract.balanceOf(owner.address);
-    expect(ownerBalance).to.equal(
-      maxAirdroppedVans - addresses.length * numToAirdrop
-    );
-
-    // TODO confirm metadata uri is still not revealed
     // end airdrop
 
-    
-    // TODO mint next 900 tokens triggering a batch
+    // 100 tokens minted in constructor. Mint another 801 so we're at 901
+    // 1 batch of 900
+    // 1 over into second, un-revealed batch
+    const tokenCount = 900
+
+    const amount = (0.10 * tokenCount).toString();
+    console.log('Amount: ', amount)
+    await kiftContract.setIsPublicSaleActive(true);
+    await kiftContract.connect(addr1).mint(tokenCount, {
+      value: ethers.utils.parseEther(amount)
+    });
+
+    balance = await kiftContract.balanceOf(addr1.address);
+    console.log('Addr1 bal: ', balance.toString());
+
+    const tx = await kiftContract.revealNextBatch();
+    await tx.wait();
+
+    let seed = await kiftContract.getSeedForBatch(1)
+    console.log('Seed: ', seed.toString())
+    // TODO figure out why this never gets populated....
+
+    // 1,2,3,899,900 should return a shuffled ID, 901 should not
+    await asyncForEach([1,2,3], async (id, idx) => {
+        let uri = await kiftContract.tokenURI(id);
+        console.log(`Uri for :: ${id} :: ${uri}`);
+      });
+
     // TODO confirm metadata uri is revealed for token 1-1000;
     // TODO mint all the way up to 10000 and confirm not overflows/offset issues
-    
   });
 });
