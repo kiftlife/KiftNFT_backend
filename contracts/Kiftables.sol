@@ -300,8 +300,7 @@ contract Kiftables is
     // batchNumber belongs to [0, TOKEN_LIMIT/REVEAL_BATCH_SIZE]
     function revealNextBatch() public {
         require(
-            totalSupply >=
-                (CONTRIBUTOR_OFFSET + lastTokenRevealed + REVEAL_BATCH_SIZE),
+            totalSupply >= (lastTokenRevealed + REVEAL_BATCH_SIZE),
             "totalSupply too low"
         );
 
@@ -321,7 +320,7 @@ contract Kiftables is
     ) internal override {
         require(
             totalSupply >=
-                (CONTRIBUTOR_OFFSET + lastTokenRevealed + REVEAL_BATCH_SIZE),
+                (lastTokenRevealed + REVEAL_BATCH_SIZE),
             "totalSupply too low"
         );
         setBatchSeed(randomWords[0]);
@@ -351,20 +350,8 @@ contract Kiftables is
     {
         require(_exists(_tokenId), "Nonexistent token");
 
-        if (_tokenId >= CONTRIBUTOR_OFFSET + lastTokenRevealed) {
+        if (_tokenId >= lastTokenRevealed) {
             return preRevealBaseURI;
-        }
-
-        if (_tokenId <= CONTRIBUTOR_OFFSET) {
-            return
-                string(
-                    abi.encodePacked(
-                        baseURI,
-                        "/",
-                        Strings.toString(_tokenId),
-                        ".json"
-                    )
-                );
         }
 
         return

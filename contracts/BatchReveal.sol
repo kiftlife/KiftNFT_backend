@@ -3,7 +3,6 @@ pragma solidity ^0.8.2;
 abstract contract BatchReveal {
     uint256 public constant TOKEN_LIMIT = 9900;
     uint256 public constant REVEAL_BATCH_SIZE = 900;
-    uint256 public constant CONTRIBUTOR_OFFSET = 100;
     mapping(uint256 => uint256) public batchToSeed;
     uint256 public lastTokenRevealed = 0; // in [0-9900]. offset not included
 
@@ -78,18 +77,12 @@ abstract contract BatchReveal {
     }
 
     // set back to internal from public when out of dev
-    function getShuffledTokenId(uint256 startId)
-        public 
-        view
-        returns (uint256)
-    {
-        if (startId < CONTRIBUTOR_OFFSET) return startId;
-
+    function getShuffledTokenId(uint256 startId) public view returns (uint256) {
         uint256 batch = startId / REVEAL_BATCH_SIZE;
         Range[RANGE_LENGTH] memory ranges = buildJumps(batch);
         uint256 positionsToMove = (startId % REVEAL_BATCH_SIZE) +
             batchToSeed[batch];
-        return CONTRIBUTOR_OFFSET + getFreeTokenId(positionsToMove, ranges);
+        return getFreeTokenId(positionsToMove, ranges);
     }
 
     function getFreeTokenId(
