@@ -14,10 +14,13 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 
 import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
+
+import "erc721a/contracts/ERC721A.sol";
+
 import "./BatchReveal.sol";
 
 contract Kiftables is
-    ERC721,
+    ERC721A,
     IERC2981,
     Ownable,
     ReentrancyGuard,
@@ -31,10 +34,10 @@ contract Kiftables is
     string public baseURI; // ifps root dir
     string private preRevealBaseURI;
 
-    uint256 public constant MAX_VANS_PER_WALLET = 5000; // set back to 5 after dev
-    uint256 public totalSupply = 10000;
-    uint256 public maxCommunitySaleVans = 7000;
-    uint256 public maxTreasuryVans = 1000;
+    uint256 public constant MAX_KIFTABLES_PER_WALLET = 5000; // set back to 5 after dev
+    uint256 public maxKiftables = 10000;
+    uint256 public maxCommunitySaleKiftables = 7000;
+    uint256 public maxTreasuryKiftables = 1000;
     bool public treasuryMinted = false;
 
     uint256 public constant PUBLIC_SALE_PRICE = 0.10 ether;
@@ -67,18 +70,18 @@ contract Kiftables is
         _;
     }
 
-    modifier totalSupplyPerWallet(uint256 numberOfTokens) {
+    modifier maxKiftablesPerWallet(uint256 numberOfTokens) {
         require(
-            balanceOf(msg.sender) + numberOfTokens <= MAX_VANS_PER_WALLET,
-            "Max vans to mint is ten"
+            balanceOf(msg.sender) + numberOfTokens <= MAX_KIFTABLES_PER_WALLET,
+            "Max kiftables to mint is ten"
         );
         _;
     }
 
-    modifier canMintVans(uint256 numberOfTokens) {
+    modifier canMintKiftables(uint256 numberOfTokens) {
         require(
-            tokenCounter.current() + numberOfTokens <= totalSupply,
-            "Not enough vans remaining to mint"
+            tokenCounter.current() + numberOfTokens <= maxKiftables,
+            "Not enough kiftables remaining to mint"
         );
         _;
     }
@@ -108,7 +111,7 @@ contract Kiftables is
         bytes32 _s_keyHash,
         address _vrfCoordinator,
         uint64 _s_subscriptionId
-    ) ERC721("Kiftables", "KIFT") VRFConsumerBaseV2(_vrfCoordinator) {
+    ) ERC721A("Kiftables", "KIFT") VRFConsumerBaseV2(_vrfCoordinator) {
         COORDINATOR = VRFCoordinatorV2Interface(_vrfCoordinator);
 
         s_keyHash = _s_keyHash;
@@ -138,11 +141,13 @@ contract Kiftables is
 
         require(treasuryMinted == false, 'Treasury can only be minted once');
 
-        for (uint256 i = 0; i < maxTreasuryVans; i++) {
+        _safeMint(msg.sender, maxTreasuryKiftables);
+
+        // for (uint256 i = 0; i < maxTreasuryKiftables; i++) {
             // TODO decide on _mint vs _safeMint - needs gas testrun
             // TODO use IERC721Receiver to support address(this) instead of msg.sender
-            _mint(msg.sender, nextTokenId());
-        }
+            // _mint(msg.sender, nextTokenId());
+        // }
 
         treasuryMinted = true;
     }
@@ -165,12 +170,13 @@ contract Kiftables is
         nonReentrant
         isCorrectPayment(PUBLIC_SALE_PRICE, numberOfTokens)
         publicSaleActive
-        canMintVans(numberOfTokens)
-        totalSupplyPerWallet(numberOfTokens)
+        canMintKiftables(numberOfTokens)
+        maxKiftablesPerWallet(numberOfTokens)
     {
-        for (uint256 i = 0; i < numberOfTokens; i++) {
-            _safeMint(msg.sender, nextTokenId());
-        }
+        _safeMint(msg.sender, numberOfTokens);
+        // for (uint256 i = 0; i < numberOfTokens; i++) {
+        //     _safeMint(msg.sender, nextTokenId());
+        // }
     }
 
     function mintCommunitySale(
@@ -181,27 +187,29 @@ contract Kiftables is
         payable
         nonReentrant
         communitySaleActive
-        canMintVans(numberOfTokens)
+        canMintKiftables(numberOfTokens)
         isCorrectPayment(COMMUNITY_SALE_PRICE, numberOfTokens)
         isValidMerkleProof(merkleProof, communityListMerkleRoot)
     {
         uint256 numAlreadyMinted = communityMintCounts[msg.sender];
 
         require(
-            numAlreadyMinted + numberOfTokens <= MAX_VANS_PER_WALLET,
-            "Max vans to mint in community sale is five"
+            numAlreadyMinted + numberOfTokens <= MAX_KIFTABLES_PER_WALLET,
+            "Max kiftables to mint in community sale is five"
         );
 
         require(
-            tokenCounter.current() + numberOfTokens <= maxCommunitySaleVans,
-            "Not enough vans remaining to mint"
+            tokenCounter.current() + numberOfTokens <= maxCommunitySaleKiftables,
+            "Not enough kiftables remaining to mint"
         );
 
         communityMintCounts[msg.sender] = numAlreadyMinted + numberOfTokens;
 
-        for (uint256 i = 0; i < numberOfTokens; i++) {
-            _safeMint(msg.sender, nextTokenId());
-        }
+        _safeMint(msg.sender, numberOfTokens);
+
+        // for (uint256 i = 0; i < numberOfTokens; i++) {
+        //     _safeMint(msg.sender, nextTokenId());
+        // }
     }
 
     // ============ PUBLIC READ-ONLY FUNCTIONS ============
@@ -283,8 +291,8 @@ contract Kiftables is
     // batchNumber belongs to [0, TOKEN_LIMIT/REVEAL_BATCH_SIZE]
     function revealNextBatch() public {
         require(
-            totalSupply >= (lastTokenRevealed + REVEAL_BATCH_SIZE),
-            "totalSupply too low"
+            maxKiftables >= (lastTokenRevealed + REVEAL_BATCH_SIZE),
+            "maxKiftables too low"
         );
 
         // requesting randomness
@@ -302,9 +310,9 @@ contract Kiftables is
         uint256[] memory randomWords
     ) internal override {
         require(
-            totalSupply >=
+            maxKiftables >=
                 (lastTokenRevealed + REVEAL_BATCH_SIZE),
-            "totalSupply too low"
+            "maxKiftables too low"
         );
         setBatchSeed(randomWords[0]);
     }
@@ -317,9 +325,6 @@ contract Kiftables is
     }
 
     // ============ FUNCTION OVERRIDES ============
-    function _burn(uint256 _tokenId) internal override(ERC721) {
-        super._burn(_tokenId);
-    }
 
     /**
      * @dev See {IERC721Metadata-tokenURI}.
@@ -328,7 +333,7 @@ contract Kiftables is
         public
         view
         virtual
-        override
+        override(ERC721A)
         returns (string memory)
     {
         require(_exists(_tokenId), "Nonexistent token");        // does this need to be here?

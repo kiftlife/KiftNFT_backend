@@ -20,6 +20,7 @@ describe('BatchReveal', async () => {
     await kiftables.connect(owner).treasuryMint();
     // TokenIds 1 - 1000 are now minted to owner
 
+    console.log('************* PREREVEAL *************');
     // confirm metadata isnt revealed yet
     // tokenIds = [1,2,3,4,5]
     const firstFive = generateTokenIdArray(1, 5);
@@ -38,6 +39,7 @@ describe('BatchReveal', async () => {
       expect(uri).to.equal(BASE_PREREVEAL_URL);
     });
 
+    console.log('************* MINT 1001 *************');
     // 1000 tokens minted in constructor. Mint another 1001 so we're at 2001
     // 1 batch of 
     // 1 over into second, un-revealed batch
@@ -50,9 +52,11 @@ describe('BatchReveal', async () => {
       value: ethers.utils.parseEther(amount)
     });
 
+    console.log('************* REVEAL 1 - 1000 *************');
     // REVEAL 2 BATCHES [0 - 2000]  (the first 1000 in the treasure and 1000 minted by "public")
     const tx0 = await kiftables.revealNextBatch();
     await tx0.wait();
+    console.log('************* REVEAL 1001 - 2000 *************');
     const tx1 = await kiftables.revealNextBatch();
     await tx1.wait();
 
@@ -66,14 +70,14 @@ describe('BatchReveal', async () => {
       let uri = await kiftables.tokenURI(id);
       let shuffledId = await kiftables.getShuffledTokenId(id);
       console.log(`Uri for :: ${id} :: ${shuffledId} :: ${uri}`);
-      if(id > 2000) {
+      if(id >= 2000) {
         expect(uri.indexOf(IPFS_BASE_URL)).to.lessThan(0)
       } else {
         expect(uri.indexOf(IPFS_BASE_URL)).to.equal(0)
       }
     });
 
-    // 
+    console.log('************* MINT 1000 (2001 - 3001) *************');
     mintCount = 1000;
     amount = parseFloat((0.1 * mintCount).toString()).toFixed(1);   // hack city
     console.log('Amount: ', amount);
@@ -94,7 +98,7 @@ describe('BatchReveal', async () => {
       let uri = await kiftables.tokenURI(id);
       let shuffledId = await kiftables.getShuffledTokenId(id);
       console.log(`Uri for :: ${id} :: ${shuffledId} :: ${uri}`);
-      if(id > 3000) {
+      if(id >= 3000) {
         expect(uri.indexOf(IPFS_BASE_URL)).to.lessThan(0)
       } else {
         expect(uri.indexOf(IPFS_BASE_URL)).to.equal(0)
