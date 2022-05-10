@@ -1,10 +1,10 @@
 pragma solidity ^0.8.2;
 
 abstract contract BatchReveal {
-    uint256 public constant TOKEN_LIMIT = 9900;
-    uint256 public constant REVEAL_BATCH_SIZE = 900;
+    uint256 public constant TOKEN_LIMIT = 10000;
+    uint256 public constant REVEAL_BATCH_SIZE = 1000;
     mapping(uint256 => uint256) public batchToSeed;
-    uint256 public lastTokenRevealed = 0; // in [0-9900]. offset not included
+    uint256 public lastTokenRevealed = 1; // in [1-10000]. offset not included
 
     struct Range {
         int128 start;

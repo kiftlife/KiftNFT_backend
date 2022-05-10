@@ -32,11 +32,9 @@ contract Kiftables is
     string private preRevealBaseURI;
 
     uint256 public constant MAX_VANS_PER_WALLET = 5000; // set back to 5 after dev
-    uint256 public maxVans = 10000;
     uint256 public totalSupply = 10000;
     uint256 public maxCommunitySaleVans = 7000;
-    uint256 public maxTreasuryVans = 900;
-    uint256 public maxAirdroppedVans = 100;
+    uint256 public maxTreasuryVans = 1000;
 
     uint256 public constant PUBLIC_SALE_PRICE = 0.10 ether;
     bool public isPublicSaleActive;
@@ -68,7 +66,7 @@ contract Kiftables is
         _;
     }
 
-    modifier maxVansPerWallet(uint256 numberOfTokens) {
+    modifier totalSupplyPerWallet(uint256 numberOfTokens) {
         require(
             balanceOf(msg.sender) + numberOfTokens <= MAX_VANS_PER_WALLET,
             "Max vans to mint is ten"
@@ -78,7 +76,7 @@ contract Kiftables is
 
     modifier canMintVans(uint256 numberOfTokens) {
         require(
-            tokenCounter.current() + numberOfTokens <= maxVans,
+            tokenCounter.current() + numberOfTokens <= totalSupply,
             "Not enough vans remaining to mint"
         );
         _;
@@ -116,7 +114,7 @@ contract Kiftables is
         s_subscriptionId = _s_subscriptionId;
 
         setPreRevealUri(_preRevealURI);
-        airdropMint();
+        // treasuryMint();
     }
 
     // ============ DEV-ONLY MERKLE TESTING ============
@@ -133,15 +131,18 @@ contract Kiftables is
 
     // ============ Airdrop ============
 
-    function airdropMint() public onlyOwner {
-        for (uint256 i = 0; i < maxAirdroppedVans; i++) {
-            // using _mint saves $5 ($386 vs $391)
+    // this will mint 1000 tokens to the contract
+    // these can be transferred to contributors etc
+    function treasuryMint() public onlyOwner {
+        for (uint256 i = 0; i < maxTreasuryVans; i++) {
+            // TODO decide on _mint vs _safeMint - needs gas testrun
             // TODO use IERC721Receiver to support address(this) instead of msg.sender
-            _safeMint(msg.sender, nextTokenId());
+            _mint(msg.sender, nextTokenId());
         }
     }
 
-    function airdropTransfer(address _to, uint256[] memory _tokenIds)
+    // TODO should this just take a count to be transferred and be random?
+    function bulkTransfer(address _to, uint256[] memory _tokenIds)
         public
         onlyOwner
     {
@@ -159,7 +160,7 @@ contract Kiftables is
         isCorrectPayment(PUBLIC_SALE_PRICE, numberOfTokens)
         publicSaleActive
         canMintVans(numberOfTokens)
-        maxVansPerWallet(numberOfTokens)
+        totalSupplyPerWallet(numberOfTokens)
     {
         for (uint256 i = 0; i < numberOfTokens; i++) {
             _safeMint(msg.sender, nextTokenId());
@@ -182,7 +183,7 @@ contract Kiftables is
 
         require(
             numAlreadyMinted + numberOfTokens <= MAX_VANS_PER_WALLET,
-            "Max vans to mint in community sale is ten"
+            "Max vans to mint in community sale is five"
         );
 
         require(
@@ -196,30 +197,6 @@ contract Kiftables is
             _safeMint(msg.sender, nextTokenId());
         }
     }
-
-    // not used, in favor of airdrop
-    // function claim(uint8 numberOfTokens, bytes32[] calldata merkleProof)
-    //     external
-    //     isValidMerkleProof(merkleProof, airdropMerkleRoot)
-    // {
-    //     uint256 numAlreadyClaimed = airdropMintCounts[msg.sender];
-
-    //     require(
-    //         numAlreadyClaimed + numberOfTokens <= MAX_VANS_PER_WALLET,
-    //         "Max vans to mint in community sale is five"
-    //     );
-
-    //     require(
-    //         tokenCounter.current() + numberOfTokens <= maxCommunitySaleVans,
-    //         "Not enough vans remaining to mint"
-    //     );
-
-    //     airdropMintCounts[msg.sender] = numAlreadyClaimed + numberOfTokens;
-
-    //     for (uint256 i = 0; i < numberOfTokens; i++) {
-    //         _safeMint(msg.sender, nextTokenId());
-    //     }
-    // }
 
     // ============ PUBLIC READ-ONLY FUNCTIONS ============
 
@@ -348,7 +325,7 @@ contract Kiftables is
         override
         returns (string memory)
     {
-        require(_exists(_tokenId), "Nonexistent token");
+        require(_exists(_tokenId), "Nonexistent token");        // does this need to be here?
 
         if (_tokenId >= lastTokenRevealed) {
             return preRevealBaseURI;

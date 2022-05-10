@@ -1,7 +1,8 @@
 
-const BASE_PREREVEAL_URL = `https://gateway.pinata.cloud/ipfs/QmR44zZLLBMwygbw9FCZpnvCsedooYM9VfKRhJhw5LwvE3`
-const IPFS_BASE_URL = `https://gateway.pinata.cloud/ipfs/QmcL4aJCM4WATiyo75wnAs2E7J6JRmnpPVbfxuk1za66VX`
-
+// const BASE_PREREVEAL_URL = `https://gateway.pinata.cloud/ipfs/QmR44zZLLBMwygbw9FCZpnvCsedooYM9VfKRhJhw5LwvE3`
+// const IPFS_BASE_URL = `https://gateway.pinata.cloud/ipfs/QmcL4aJCM4WATiyo75wnAs2E7J6JRmnpPVbfxuk1za66VX`
+const BASE_PREREVEAL_URL = 'ipfs://a-placeholder-image-path';
+const IPFS_BASE_URL = 'ifps://a-real-path'
 
 const CHAINLINK_SUB_ID = '2879'
 const CHAINLINK_KEY_HASH = '0xd89b2bf150e3b9e13446986e571fb9cab24b13cea0a43ea20a6049a85cc807cc'
