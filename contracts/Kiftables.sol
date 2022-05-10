@@ -35,6 +35,7 @@ contract Kiftables is
     uint256 public totalSupply = 10000;
     uint256 public maxCommunitySaleVans = 7000;
     uint256 public maxTreasuryVans = 1000;
+    bool public treasuryMinted = false;
 
     uint256 public constant PUBLIC_SALE_PRICE = 0.10 ether;
     bool public isPublicSaleActive;
@@ -114,7 +115,7 @@ contract Kiftables is
         s_subscriptionId = _s_subscriptionId;
 
         setPreRevealUri(_preRevealURI);
-        // treasuryMint();
+        // treasuryMint();      // removed because contract too big...?
     }
 
     // ============ DEV-ONLY MERKLE TESTING ============
@@ -134,11 +135,16 @@ contract Kiftables is
     // this will mint 1000 tokens to the contract
     // these can be transferred to contributors etc
     function treasuryMint() public onlyOwner {
+
+        require(treasuryMinted == false, 'Treasury can only be minted once');
+
         for (uint256 i = 0; i < maxTreasuryVans; i++) {
             // TODO decide on _mint vs _safeMint - needs gas testrun
             // TODO use IERC721Receiver to support address(this) instead of msg.sender
             _mint(msg.sender, nextTokenId());
         }
+
+        treasuryMinted = true;
     }
 
     // TODO should this just take a count to be transferred and be random?
