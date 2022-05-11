@@ -135,7 +135,7 @@ describe('BatchReveal', async () => {
       async (id, idx) => {
         let uri = await kiftables.tokenURI(id);
         let shuffledId = await kiftables.getShuffledTokenId(id);
-        console.log(`Uri for :: ${id.toString().padStart(4, '0')} :: ${shuffledId} :: ${uri}`);
+        console.log(`Uri for tokenId: ${id.toString().padStart(4, '0')} :: shuffledId: ${shuffledId} :: path: ${uri}`);
         expect(uri.indexOf(IPFS_BASE_URL)).to.equal(0);
       }
     );
