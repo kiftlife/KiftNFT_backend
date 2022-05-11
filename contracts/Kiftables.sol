@@ -139,15 +139,14 @@ contract Kiftables is
     // this will mint 1000 tokens to the contract
     // these can be transferred to contributors etc
     function treasuryMint() public onlyOwner {
-
-        require(treasuryMinted == false, 'Treasury can only be minted once');
+        require(treasuryMinted == false, "Treasury can only be minted once");
 
         _safeMint(msg.sender, maxTreasuryKiftables);
 
         // for (uint256 i = 0; i < maxTreasuryKiftables; i++) {
-            // TODO decide on _mint vs _safeMint - needs gas testrun
-            // TODO use IERC721Receiver to support address(this) instead of msg.sender
-            // _mint(msg.sender, nextTokenId());
+        // TODO decide on _mint vs _safeMint - needs gas testrun
+        // TODO use IERC721Receiver to support address(this) instead of msg.sender
+        // _mint(msg.sender, nextTokenId());
         // }
 
         treasuryMinted = true;
@@ -316,8 +315,7 @@ contract Kiftables is
         uint256[] memory randomWords
     ) internal override {
         require(
-            maxKiftables >=
-                (lastTokenRevealed + REVEAL_BATCH_SIZE),
+            maxKiftables >= (lastTokenRevealed + REVEAL_BATCH_SIZE),
             "maxKiftables too low"
         );
         setBatchSeed(randomWords[0]);
@@ -334,6 +332,14 @@ contract Kiftables is
     // ============ FUNCTION OVERRIDES ============
 
     /**
+     * Overrides ERC721A
+     * start at index 1 
+     */
+    function _startTokenId() internal view virtual override returns (uint256) {
+        return 1;
+    }
+
+    /**
      * @dev See {IERC721Metadata-tokenURI}.
      */
     function tokenURI(uint256 _tokenId)
@@ -343,7 +349,7 @@ contract Kiftables is
         override(ERC721A)
         returns (string memory)
     {
-        require(_exists(_tokenId), "Nonexistent token");        // does this need to be here?
+        require(_exists(_tokenId), "Nonexistent token"); // does this need to be here?
 
         // this cant be >= otherwise the last token cant be revealed
         // @Lev, can you confirm this is without >= ?
