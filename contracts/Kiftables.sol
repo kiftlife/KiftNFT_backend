@@ -29,7 +29,8 @@ contract Kiftables is
 {
     using Counters for Counters.Counter;
 
-    Counters.Counter private tokenCounter;
+    // TODO delete this. ERC721A handles this
+    // Counters.Counter private tokenCounter;
 
     string public baseURI; // ifps root dir
     string private preRevealBaseURI;
@@ -80,7 +81,7 @@ contract Kiftables is
 
     modifier canMintKiftables(uint256 numberOfTokens) {
         require(
-            tokenCounter.current() + numberOfTokens <= maxKiftables,
+            _totalMinted() + numberOfTokens <= maxKiftables,
             "Not enough kiftables remaining to mint"
         );
         _;
@@ -199,7 +200,7 @@ contract Kiftables is
         );
 
         require(
-            tokenCounter.current() + numberOfTokens <= maxCommunitySaleKiftables,
+            _totalMinted() + numberOfTokens <= maxCommunitySaleKiftables,
             "Not enough kiftables remaining to mint"
         );
 
@@ -227,7 +228,11 @@ contract Kiftables is
     }
 
     function count() public view returns (uint256) {
-        return tokenCounter.current();
+        return _totalMinted();
+    }
+
+    function revealCount() external view returns (uint256) {
+        return lastTokenRevealed;
     }
 
     // ============ OWNER-ONLY ADMIN FUNCTIONS ============
@@ -274,10 +279,11 @@ contract Kiftables is
         airdropMerkleRoot = _merkleRoot;
     }
 
+    // TODO Delete this
     // TODO currently defaulting back to reverse check using ownerOf(tokenId)
-    function isContentOwned(string memory _uri) public view returns (bool) {
-        return existingURIs[_uri] == 1;
-    }
+    // function isContentOwned(string memory _uri) public view returns (bool) {
+    //     return existingURIs[_uri] == 1;
+    // }
 
     function withdraw() public payable onlyOwner {
         (bool success, ) = payable(msg.sender).call{
@@ -319,10 +325,11 @@ contract Kiftables is
 
     // ============ SUPPORTING FUNCTIONS ============
 
-    function nextTokenId() private returns (uint256) {
-        tokenCounter.increment();
-        return tokenCounter.current();
-    }
+    // TODO delete this. ERC721A takes care of this
+    // function nextTokenId() private returns (uint256) {
+    //     tokenCounter.increment();
+    //     return tokenCounter.current();
+    // }
 
     // ============ FUNCTION OVERRIDES ============
 
@@ -338,7 +345,9 @@ contract Kiftables is
     {
         require(_exists(_tokenId), "Nonexistent token");        // does this need to be here?
 
-        if (_tokenId >= lastTokenRevealed) {
+        // this cant be >= otherwise the last token cant be revealed
+        // @Lev, can you confirm this is without >= ?
+        if (_tokenId > lastTokenRevealed) {
             return preRevealBaseURI;
         }
 
