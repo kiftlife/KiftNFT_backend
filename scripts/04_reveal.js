@@ -5,7 +5,7 @@ const { BASE_PREREVEAL_URL , IPFS_BASE_URL} = require('../config/config');
 const { ALCHEMY_API_KEY, PRIVATE_KEY, CONTRACT_ADDRESS, TEST_WALLET_OWNER } =
   process.env;
 const alchemyProvider = new ethers.providers.AlchemyProvider(
-  (network = 'maticmum'),
+  (network = 'rinkeby'),
   ALCHEMY_API_KEY
 );
 const signer = new ethers.Wallet(PRIVATE_KEY, alchemyProvider);
