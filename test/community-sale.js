@@ -15,27 +15,27 @@ describe('Community Sale', function () {
       });
       const communityRoot = buf2hex(communityTree.getRoot());
   
-      const kiftVans = await (
-        await ethers.getContractFactory('KiftVans')
+      const kiftables = await (
+        await ethers.getContractFactory('Kiftables')
       ).deploy(1000, 10);
-      await kiftVans.deployed();
+      await kiftables.deployed();
   
       console.log('setting community root: ', communityRoot);
-      await kiftVans.setCommunityListMerkleRoot(communityRoot);
+      await kiftables.setCommunityListMerkleRoot(communityRoot);
   
       const proof = communityTree.getHexProof(communityHash[0]);
       console.log('Community Proof: ', proof);
   
-      const verified = await kiftVans.connect(addr2).verify(proof, communityRoot);
+      const verified = await kiftables.connect(addr2).verify(proof, communityRoot);
       console.log('Verified? ', verified);
       expect(verified).to.equal(true);
   
-      await kiftVans.setIsCommunitySaleActive(true);
-      await kiftVans.connect(addr2).mintCommunitySale(1, proof, {
+      await kiftables.setIsCommunitySaleActive(true);
+      await kiftables.connect(addr2).mintCommunitySale(1, proof, {
         value: ethers.utils.parseEther('0.1')
       });
   
-      balance = await kiftVans.balanceOf(communityDevAddresses[0]);
+      balance = await kiftables.balanceOf(communityDevAddresses[0]);
       expect(balance).to.equal(1);
     });
   });

@@ -16,7 +16,14 @@ import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
 import "./BatchReveal.sol";
 
-contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard, VRFConsumerBaseV2, BatchReveal {
+contract Kiftables is
+    ERC721,
+    IERC2981,
+    Ownable,
+    ReentrancyGuard,
+    VRFConsumerBaseV2,
+    BatchReveal
+{
     using Counters for Counters.Counter;
 
     Counters.Counter private tokenCounter;
@@ -24,11 +31,11 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard, VRFConsumerBase
     string public baseURI; // ifps root dir
     string private preRevealBaseURI;
 
-    uint256 public constant MAX_VANS_PER_WALLET = 5;
-    uint256 public maxVans = 10000;
+    uint256 public constant MAX_VANS_PER_WALLET = 5000; // set back to 5 after dev
+    uint256 public totalSupply = 10000;
     uint256 public maxCommunitySaleVans = 7000;
-    uint256 public maxTreasuryVans = 900;
-    uint256 public maxAirdroppedVans = 100;
+    uint256 public maxTreasuryVans = 1000;
+    bool public treasuryMinted = false;
 
     uint256 public constant PUBLIC_SALE_PRICE = 0.10 ether;
     bool public isPublicSaleActive;
@@ -45,8 +52,8 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard, VRFConsumerBase
 
     // Constants from https://docs.chain.link/docs/vrf-contracts/
     VRFCoordinatorV2Interface COORDINATOR;
-    bytes32 immutable private s_keyHash;
-    uint64 immutable private s_subscriptionId;
+    bytes32 private immutable s_keyHash;
+    uint64 private immutable s_subscriptionId;
 
     // ============ ACCESS CONTROL/SANITY MODIFIERS ============
 
@@ -60,7 +67,7 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard, VRFConsumerBase
         _;
     }
 
-    modifier maxVansPerWallet(uint256 numberOfTokens) {
+    modifier totalSupplyPerWallet(uint256 numberOfTokens) {
         require(
             balanceOf(msg.sender) + numberOfTokens <= MAX_VANS_PER_WALLET,
             "Max vans to mint is ten"
@@ -70,7 +77,7 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard, VRFConsumerBase
 
     modifier canMintVans(uint256 numberOfTokens) {
         require(
-            tokenCounter.current() + numberOfTokens <= maxVans,
+            tokenCounter.current() + numberOfTokens <= totalSupply,
             "Not enough vans remaining to mint"
         );
         _;
@@ -96,17 +103,19 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard, VRFConsumerBase
         _;
     }
 
-    constructor(string memory _preRevealURI, bytes32 _s_keyHash, address _vrfCoordinator, uint64 _s_subscriptionId) 
-        ERC721("KiftVans", "KIFT") 
-        VRFConsumerBaseV2(_vrfCoordinator) {
-        
+    constructor(
+        string memory _preRevealURI,
+        bytes32 _s_keyHash,
+        address _vrfCoordinator,
+        uint64 _s_subscriptionId
+    ) ERC721("Kiftables", "KIFT") VRFConsumerBaseV2(_vrfCoordinator) {
         COORDINATOR = VRFCoordinatorV2Interface(_vrfCoordinator);
 
         s_keyHash = _s_keyHash;
         s_subscriptionId = _s_subscriptionId;
 
         setPreRevealUri(_preRevealURI);
-        airdropMint();
+        // treasuryMint();      // removed because contract too big...?
     }
 
     // ============ DEV-ONLY MERKLE TESTING ============
@@ -123,15 +132,23 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard, VRFConsumerBase
 
     // ============ Airdrop ============
 
-    function airdropMint() public onlyOwner {
-        for (uint256 i = 0; i < maxAirdroppedVans; i++) {
-            // using _mint saves $5 ($386 vs $391)
+    // this will mint 1000 tokens to the contract
+    // these can be transferred to contributors etc
+    function treasuryMint() public onlyOwner {
+
+        require(treasuryMinted == false, 'Treasury can only be minted once');
+
+        for (uint256 i = 0; i < maxTreasuryVans; i++) {
+            // TODO decide on _mint vs _safeMint - needs gas testrun
             // TODO use IERC721Receiver to support address(this) instead of msg.sender
-            _safeMint(msg.sender, nextTokenId());
+            _mint(msg.sender, nextTokenId());
         }
+
+        treasuryMinted = true;
     }
 
-    function airdropTransfer(address _to, uint256[] memory _tokenIds)
+    // TODO should this just take a count to be transferred and be random?
+    function bulkTransfer(address _to, uint256[] memory _tokenIds)
         public
         onlyOwner
     {
@@ -149,7 +166,7 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard, VRFConsumerBase
         isCorrectPayment(PUBLIC_SALE_PRICE, numberOfTokens)
         publicSaleActive
         canMintVans(numberOfTokens)
-        maxVansPerWallet(numberOfTokens)
+        totalSupplyPerWallet(numberOfTokens)
     {
         for (uint256 i = 0; i < numberOfTokens; i++) {
             _safeMint(msg.sender, nextTokenId());
@@ -172,7 +189,7 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard, VRFConsumerBase
 
         require(
             numAlreadyMinted + numberOfTokens <= MAX_VANS_PER_WALLET,
-            "Max vans to mint in community sale is ten"
+            "Max vans to mint in community sale is five"
         );
 
         require(
@@ -186,30 +203,6 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard, VRFConsumerBase
             _safeMint(msg.sender, nextTokenId());
         }
     }
-
-    // not used, in favor of airdrop
-    // function claim(uint8 numberOfTokens, bytes32[] calldata merkleProof)
-    //     external
-    //     isValidMerkleProof(merkleProof, airdropMerkleRoot)
-    // {
-    //     uint256 numAlreadyClaimed = airdropMintCounts[msg.sender];
-
-    //     require(
-    //         numAlreadyClaimed + numberOfTokens <= MAX_VANS_PER_WALLET,
-    //         "Max vans to mint in community sale is five"
-    //     );
-
-    //     require(
-    //         tokenCounter.current() + numberOfTokens <= maxCommunitySaleVans,
-    //         "Not enough vans remaining to mint"
-    //     );
-
-    //     airdropMintCounts[msg.sender] = numAlreadyClaimed + numberOfTokens;
-
-    //     for (uint256 i = 0; i < numberOfTokens; i++) {
-    //         _safeMint(msg.sender, nextTokenId());
-    //     }
-    // }
 
     // ============ PUBLIC READ-ONLY FUNCTIONS ============
 
@@ -289,7 +282,10 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard, VRFConsumerBase
 
     // batchNumber belongs to [0, TOKEN_LIMIT/REVEAL_BATCH_SIZE]
     function revealNextBatch() public {
-        require(totalSupply >= (CONTRIBUTOR_OFFSET + lastTokenRevealed + REVEAL_BATCH_SIZE), "totalSupply too low");
+        require(
+            totalSupply >= (lastTokenRevealed + REVEAL_BATCH_SIZE),
+            "totalSupply too low"
+        );
 
         // requesting randomness
         COORDINATOR.requestRandomWords(
@@ -301,8 +297,15 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard, VRFConsumerBase
         );
     }
 
-    function fulfillRandomWords(uint256 /* requestId */, uint256[] memory randomWords) internal override {
-        require(totalSupply >= (CONTRIBUTOR_OFFSET + lastTokenRevealed + REVEAL_BATCH_SIZE), "totalSupply too low");
+    function fulfillRandomWords(
+        uint256, /* requestId */
+        uint256[] memory randomWords
+    ) internal override {
+        require(
+            totalSupply >=
+                (lastTokenRevealed + REVEAL_BATCH_SIZE),
+            "totalSupply too low"
+        );
         setBatchSeed(randomWords[0]);
     }
 
@@ -328,9 +331,9 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard, VRFConsumerBase
         override
         returns (string memory)
     {
-        require(_exists(_tokenId), "Nonexistent token");
+        require(_exists(_tokenId), "Nonexistent token");        // does this need to be here?
 
-        if (id >= CONTRIBUTOR_OFFSET + lastTokenRevealed) {
+        if (_tokenId >= lastTokenRevealed) {
             return preRevealBaseURI;
         }
 
@@ -339,7 +342,7 @@ contract KiftVans is ERC721, IERC2981, Ownable, ReentrancyGuard, VRFConsumerBase
                 abi.encodePacked(
                     baseURI,
                     "/",
-                    getShuffledTokenId(_tokenId).toString(),
+                    Strings.toString(getShuffledTokenId(_tokenId)),
                     ".json"
                 )
             );

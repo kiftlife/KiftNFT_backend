@@ -37,22 +37,22 @@ console.log(merkleTree.verify(proof, hashedAddresses[0], rootHash))
 async function main() {
 
   // We get the contract to deploy
-  const KiftVans = await hre.ethers.getContractFactory("KiftVans");
-  const kiftVans = await KiftVans.deploy(1000, 10);
+  const Kiftables = await hre.ethers.getContractFactory("Kiftables");
+  const kiftables = await Kiftables.deploy(1000, 10);
 
-  await kiftVans.deployed();
+  await kiftables.deployed();
 
-  await kiftVans.setClaimListMerkleRoot(rootHash);
+  await kiftables.setClaimListMerkleRoot(rootHash);
   const proof = merkleTree.getHexProof(hashedAddresses[0]);
-  const verified = await kiftVans.verify(proof, rootHash);
+  const verified = await kiftables.verify(proof, rootHash);
   console.log('Verified: ', verified)
 
-  const tx = await kiftVans.claim(proof)
+  const tx = await kiftables.claim(proof)
   const receipt = await tx.wait();
 
   console.log(receipt);
 
-  console.log("KiftVans NFT deployed to:", kiftVans.address);
+  console.log("Kiftables NFT deployed to:", kiftables.address);
 }
 
 // We recommend this pattern to be able to use async/await everywhere

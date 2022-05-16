@@ -1,12 +1,12 @@
 const { ethers } = require('hardhat');
 const { BASE_PREREVEAL_URL } = require('../config/config');
 async function main() {
-  const KiftVans = await ethers.getContractFactory('KiftVans');
-  const kiftVans = await KiftVans.deploy(BASE_PREREVEAL_URL);
+  const Kiftables = await ethers.getContractFactory('Kiftables');
+  const kiftables = await Kiftables.deploy(BASE_PREREVEAL_URL);
 
-  await kiftVans.deployed();
+  await kiftables.deployed();
 
-  console.log('KiftVans NFT Contract deployed to:', kiftVans.address);
+  console.log('Kiftables NFT Contract deployed to:', kiftables.address);
 }
 
 main()
