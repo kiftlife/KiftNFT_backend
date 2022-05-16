@@ -16,6 +16,18 @@ describe('BatchReveal', async () => {
     // deploy
     const kiftables = await deployAllContracts();
 
+    const iMintCount = await kiftables.count();
+    console.log('Initial Mint Count: ', iMintCount);
+
+    const idx = await kiftables.counter();
+    console.log('Start idx: ', idx)
+
+    const revealedCount = await kiftables.revealCount();
+    console.log('Reveal Count: ', revealedCount)
+
+    let batchToSeed = await kiftables.batchToSeed(0);
+    console.log('Batch to Seed: ', batchToSeed)
+
     // treasury mint.
     await kiftables.connect(owner).treasuryMint();
     // TokenIds 1 - 1000 are now minted to owner
@@ -23,7 +35,7 @@ describe('BatchReveal', async () => {
     console.log('************* PREREVEAL *************');
 
     // confirm metadata isnt revealed yet
-    const firstFive = generateTokenIdArray(1, 3); // [1,2,3]
+    const firstFive = generateTokenIdArray(2, 3); // [1,2,3]
     const lastFive = generateTokenIdArray(998, 3); // [998, 998, 1000]
     await asyncForEach([...firstFive, ...lastFive], async (id, idx) => {
       let uri = await kiftables.tokenURI(id);
