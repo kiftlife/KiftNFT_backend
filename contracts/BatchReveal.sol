@@ -116,11 +116,6 @@ abstract contract BatchReveal {
         return uint256(uint128(id + positionsToMove));
     }
 
-    // for dev purposes only
-    function getSeedForBatch(uint256 batch) public view returns (uint256 seed) {
-        return batchToSeed[batch];
-    }
-
     function setBatchSeed(uint256 randomness) internal {
         uint256 batchNumber;
         unchecked {

@@ -29,9 +29,6 @@ contract Kiftables is
 {
     using Counters for Counters.Counter;
 
-    // TODO delete this. ERC721A handles this
-    // Counters.Counter private tokenCounter;
-
     string public baseURI; // ifps root dir
     string private preRevealBaseURI;
 
@@ -47,12 +44,9 @@ contract Kiftables is
     uint256 public constant COMMUNITY_SALE_PRICE = 0.08 ether;
     bool public isCommunitySaleActive;
 
-    bytes32 public airdropMerkleRoot;
     bytes32 public communityListMerkleRoot;
 
-    mapping(string => uint8) existingURIs; // not currently implemented
     mapping(address => uint256) public communityMintCounts;
-    mapping(address => uint256) public airdropMintCounts;
 
     // Constants from https://docs.chain.link/docs/vrf-contracts/
     VRFCoordinatorV2Interface COORDINATOR;
@@ -74,7 +68,7 @@ contract Kiftables is
     modifier maxKiftablesPerWallet(uint256 numberOfTokens) {
         require(
             balanceOf(msg.sender) + numberOfTokens <= MAX_KIFTABLES_PER_WALLET,
-            "Max kiftables to mint is ten"
+            "Max kiftables to mint is five"
         );
         _;
     }
@@ -114,15 +108,12 @@ contract Kiftables is
         uint64 _s_subscriptionId
     ) ERC721A("Kiftables", "KIFT") VRFConsumerBaseV2(_vrfCoordinator) {
         COORDINATOR = VRFCoordinatorV2Interface(_vrfCoordinator);
-
         s_keyHash = _s_keyHash;
         s_subscriptionId = _s_subscriptionId;
-
         setPreRevealUri(_preRevealURI);
-        // treasuryMint();      // removed because contract too big...?
     }
 
-    // ============ DEV-ONLY MERKLE TESTING ============
+    // ============ DEV-ONLY TESTING ============
 
     function verify(bytes32[] calldata proof, bytes32 root)
         public
@@ -134,23 +125,34 @@ contract Kiftables is
         return MerkleProof.verify(proof, root, leaf);
     }
 
-    // ============ Airdrop ============
+    function counter() public view returns (uint256) {
+        return _currentIndex;
+    }
 
-    // this will mint 1000 tokens to the contract
-    // these can be transferred to contributors etc
+    function revealCount() external view returns (uint256) {
+        return lastTokenRevealed;
+    }
+
+    function getSeedForBatch(uint256 batch)
+        public
+        view
+        override
+        returns (uint256 seed)
+    {
+        return batchToSeed[batch];
+    }
+
+    // ============ Treasury ============
+
     function treasuryMint() public onlyOwner {
         require(treasuryMinted == false, "Treasury can only be minted once");
 
         _safeMint(msg.sender, maxTreasuryKiftables);
 
-        // for (uint256 i = 0; i < maxTreasuryKiftables; i++) {
-        // TODO decide on _mint vs _safeMint - needs gas testrun
-        // TODO use IERC721Receiver to support address(this) instead of msg.sender
-        // _mint(msg.sender, nextTokenId());
-        // }
-
         treasuryMinted = true;
     }
+
+    // ============ Airdrop ============
 
     // TODO should this just take a count to be transferred and be random?
     function bulkTransfer(address _to, uint256[] memory _tokenIds)
@@ -174,9 +176,6 @@ contract Kiftables is
         maxKiftablesPerWallet(numberOfTokens)
     {
         _safeMint(msg.sender, numberOfTokens);
-        // for (uint256 i = 0; i < numberOfTokens; i++) {
-        //     _safeMint(msg.sender, nextTokenId());
-        // }
     }
 
     function mintCommunitySale(
@@ -206,10 +205,6 @@ contract Kiftables is
         communityMintCounts[msg.sender] = numAlreadyMinted + numberOfTokens;
 
         _safeMint(msg.sender, numberOfTokens);
-
-        // for (uint256 i = 0; i < numberOfTokens; i++) {
-        //     _safeMint(msg.sender, nextTokenId());
-        // }
     }
 
     // ============ PUBLIC READ-ONLY FUNCTIONS ============
@@ -228,10 +223,6 @@ contract Kiftables is
 
     function count() public view returns (uint256) {
         return _totalMinted();
-    }
-
-    function revealCount() external view returns (uint256) {
-        return lastTokenRevealed;
     }
 
     // ============ OWNER-ONLY ADMIN FUNCTIONS ============
@@ -274,16 +265,6 @@ contract Kiftables is
         communityListMerkleRoot = _merkleRoot;
     }
 
-    function setAirdropListMerkleRoot(bytes32 _merkleRoot) external onlyOwner {
-        airdropMerkleRoot = _merkleRoot;
-    }
-
-    // TODO Delete this
-    // TODO currently defaulting back to reverse check using ownerOf(tokenId)
-    // function isContentOwned(string memory _uri) public view returns (bool) {
-    //     return existingURIs[_uri] == 1;
-    // }
-
     function withdraw() public payable onlyOwner {
         (bool success, ) = payable(msg.sender).call{
             value: address(this).balance
@@ -321,19 +302,8 @@ contract Kiftables is
         setBatchSeed(randomWords[0]);
     }
 
-    // ============ SUPPORTING FUNCTIONS ============
-
-    // TODO delete this. ERC721A takes care of this
-    // function nextTokenId() private returns (uint256) {
-    //     tokenCounter.increment();
-    //     return tokenCounter.current();
-    // }
-
-    // ============ FUNCTION OVERRIDES ============
-
     /**
-     * Overrides ERC721A
-     * start at index 1 
+     * Overrides ERC721A to start at index 1
      */
     function _startTokenId() internal view virtual override returns (uint256) {
         return 1;
@@ -353,7 +323,7 @@ contract Kiftables is
 
         // this cant be >= otherwise the last token cant be revealed
         // @Lev, can you confirm this is without >= ?
-        if (_tokenId > lastTokenRevealed) {
+        if (_tokenId >= lastTokenRevealed) {
             return preRevealBaseURI;
         }
 
