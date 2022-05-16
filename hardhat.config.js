@@ -34,14 +34,10 @@ module.exports = {
     hardhat: {
       chainId: 1337
     },
-    rinkeby: {
-      url: ALCHEMY_RINKEBY_API_URL,
-      accounts: [PRIVATE_KEY]
-    },
-    polygon_mumbai: {
-      url: ALCHEMY_POLYGON_API_URL,
-      accounts: [PRIVATE_KEY]
-    }
+    // rinkeby: {
+    //   url: ALCHEMY_RINKEBY_API_URL,
+    //   accounts: [PRIVATE_KEY]
+    // }
   },
   gasReporter: {
     currency: 'USD',
