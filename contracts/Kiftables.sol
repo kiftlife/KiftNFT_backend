@@ -137,7 +137,6 @@ contract Kiftables is
     function getSeedForBatch(uint256 batch)
         public
         view
-        override
         returns (uint256 seed)
     {
         return batchToSeed[batch];
