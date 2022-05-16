@@ -155,6 +155,7 @@ contract Kiftables is
     // ============ Airdrop ============
 
     // TODO should this just take a count to be transferred and be random?
+    // TODO does ERC721a implement transfer more efficiently now?
     function bulkTransfer(address _to, uint256[] memory _tokenIds)
         public
         onlyOwner
