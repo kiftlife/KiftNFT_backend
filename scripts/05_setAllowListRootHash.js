@@ -3,22 +3,24 @@ require('dotenv').config();
 const { MerkleTree } = require('merkletreejs');
 const keccak256 = require('keccak256');
 const buf2hex = (x) => '0x' + x.toString('hex');
+const serviceAccount = require('../config/kift-dao-firebase-adminsdk-h33ad-dc02a0ded4.json');
+const admin = require('firebase-admin');
 
-const addresses = [
-    '0x3F297A7f5631EEeF286c2a636c92c26789e5DE4D',
-    '0xbcd4042de499d14e55001ccbb24a551f3b954097',
-    '0xbcd4042de499d14e55001ccbb24a551f3b954096',
-    '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
-    '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
-    '0x93E40A70115C9EfC67f817BfC62717d8Ab66C720'
-
-]
-const hashedAddresses = addresses.map((addr) => keccak256(addr));
-const merkleTree = new MerkleTree(hashedAddresses, keccak256, {
-  sortPairs: true
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+  databaseURL: 'https://kift-dao.firebaseio.com'
 });
-const rootHash = buf2hex(merkleTree.getRoot());
-console.log('Root Hash: ', rootHash)
+
+const getAddresses = async () => {
+  const result = await admin
+    .firestore()
+    .doc('/ALLOWLIST/d8dhgQ0U1oq2pF9rRkRy')
+    .get();
+  const doc = result.data();
+  const { ADDRESSES } = doc;
+
+  return ADDRESSES;
+};
 
 const { ALCHEMY_API_KEY, PRIVATE_KEY, CONTRACT_ADDRESS } = process.env;
 
@@ -35,15 +37,20 @@ const kiftContract = new ethers.Contract(
 );
 
 async function main() {
+  const addresses = await getAddresses();
+
+  console.log('Addresses: ', addresses);
+  const hashedAddresses = addresses.map((addr) => keccak256(addr));
+  const merkleTree = new MerkleTree(hashedAddresses, keccak256, {
+    sortPairs: true
+  });
+  const rootHash = buf2hex(merkleTree.getRoot());
+  console.log('Root Hash: ', rootHash);
+
   const tx = await kiftContract.setCommunityListMerkleRoot(rootHash);
   await tx.wait();
 
-  console.log(
-    'Community sale active: ',
-    await kiftContract.communitySaleLive()
-  );
-  console.log('Public sale active: ', await kiftContract.publicSaleLive());
-
+  console.log('AllowList Set');
 }
 
 main()

@@ -10,7 +10,9 @@
     "@nomiclabs/hardhat-ethers": "^2.0.4",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
     "@openzeppelin/contracts": "^4.4.2",
+    "@openzeppelin/test-helpers": "^0.5.15",
     "chai": "^4.3.4",
+    "erc721a": "^3.3.0",
     "ethereum-waffle": "^3.4.0",
     "hardhat-gas-reporter": "^1.0.8"
   },
@@ -18,6 +20,7 @@
   "license": "UNLICENSED",
   "dependencies": {
     "dotenv": "^16.0.0",
+    "firebase-admin": "^10.2.0",
     "keccak256": "^1.0.6",
     "merkletreejs": "^0.2.30"
   }

@@ -5,7 +5,7 @@ const { ALCHEMY_API_KEY, PRIVATE_KEY, CONTRACT_ADDRESS } = process.env;
 
 const contract = require('../src/artifacts/contracts/Kiftables.sol/Kiftables.json');
 const alchemyProvider = new ethers.providers.AlchemyProvider(
-  (network = 'maticmum'),
+  (network = 'rinkeby'),
   ALCHEMY_API_KEY
 );
 const signer = new ethers.Wallet(PRIVATE_KEY, alchemyProvider);
@@ -16,17 +16,13 @@ const kiftContract = new ethers.Contract(
 );
 
 async function main() {
-  const tx1 = await kiftContract.setIsCommunitySaleActive(false);
-  const tx2 = await kiftContract.setIsPublicSaleActive(false);
-
+  const tx1 = await kiftContract.treasuryMint();
   await tx1.wait();
-  await tx2.wait();
 
   console.log(
-    'Community sale active: ',
-    await kiftContract.communitySaleLive()
+    'Treasury minted: ',
+    await kiftContract.balanceOf(signer.address)
   );
-  console.log('Public sale active: ', await kiftContract.publicSaleLive());
 }
 
 main()

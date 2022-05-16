@@ -9,7 +9,7 @@
  
  const contract = require('../src/artifacts/contracts/Kiftables.sol/Kiftables.json');
  const alchemyProvider = new ethers.providers.AlchemyProvider(
-   (network = 'maticmum'),
+   (network = 'rinkeby'),
    ALCHEMY_API_KEY
  );
  const signer = new ethers.Wallet(PRIVATE_KEY, alchemyProvider);

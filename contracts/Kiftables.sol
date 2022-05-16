@@ -14,10 +14,13 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 
 import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
+
+import "erc721a/contracts/ERC721A.sol";
+
 import "./BatchReveal.sol";
 
 contract Kiftables is
-    ERC721,
+    ERC721A,
     IERC2981,
     Ownable,
     ReentrancyGuard,
@@ -26,15 +29,14 @@ contract Kiftables is
 {
     using Counters for Counters.Counter;
 
-    Counters.Counter private tokenCounter;
-
     string public baseURI; // ifps root dir
     string private preRevealBaseURI;
 
-    uint256 public constant MAX_VANS_PER_WALLET = 5000; // set back to 5 after dev
-    uint256 public totalSupply = 10000;
-    uint256 public maxCommunitySaleVans = 7000;
-    uint256 public maxTreasuryVans = 1000;
+    // uint256 public constant MAX_KIFTABLES_PER_WALLET = 5;
+    uint256 public constant MAX_KIFTABLES_PER_WALLET = 7000; // set back to 5 after dev
+    uint256 public maxKiftables = 10000;
+    uint256 public maxCommunitySaleKiftables = 7000;
+    uint256 public maxTreasuryKiftables = 1000;
     bool public treasuryMinted = false;
 
     uint256 public constant PUBLIC_SALE_PRICE = 0.10 ether;
@@ -43,12 +45,9 @@ contract Kiftables is
     uint256 public constant COMMUNITY_SALE_PRICE = 0.08 ether;
     bool public isCommunitySaleActive;
 
-    bytes32 public airdropMerkleRoot;
     bytes32 public communityListMerkleRoot;
 
-    mapping(string => uint8) existingURIs; // not currently implemented
     mapping(address => uint256) public communityMintCounts;
-    mapping(address => uint256) public airdropMintCounts;
 
     // Constants from https://docs.chain.link/docs/vrf-contracts/
     VRFCoordinatorV2Interface COORDINATOR;
@@ -67,18 +66,18 @@ contract Kiftables is
         _;
     }
 
-    modifier totalSupplyPerWallet(uint256 numberOfTokens) {
+    modifier maxKiftablesPerWallet(uint256 numberOfTokens) {
         require(
-            balanceOf(msg.sender) + numberOfTokens <= MAX_VANS_PER_WALLET,
-            "Max vans to mint is ten"
+            balanceOf(msg.sender) + numberOfTokens <= MAX_KIFTABLES_PER_WALLET,
+            "Max kiftables to mint is five"
         );
         _;
     }
 
-    modifier canMintVans(uint256 numberOfTokens) {
+    modifier canMintKiftables(uint256 numberOfTokens) {
         require(
-            tokenCounter.current() + numberOfTokens <= totalSupply,
-            "Not enough vans remaining to mint"
+            _totalMinted() + numberOfTokens <= maxKiftables,
+            "Not enough kiftables remaining to mint"
         );
         _;
     }
@@ -108,17 +107,14 @@ contract Kiftables is
         bytes32 _s_keyHash,
         address _vrfCoordinator,
         uint64 _s_subscriptionId
-    ) ERC721("Kiftables", "KIFT") VRFConsumerBaseV2(_vrfCoordinator) {
+    ) ERC721A("Kiftables", "KIFT") VRFConsumerBaseV2(_vrfCoordinator) {
         COORDINATOR = VRFCoordinatorV2Interface(_vrfCoordinator);
-
         s_keyHash = _s_keyHash;
         s_subscriptionId = _s_subscriptionId;
-
         setPreRevealUri(_preRevealURI);
-        // treasuryMint();      // removed because contract too big...?
     }
 
-    // ============ DEV-ONLY MERKLE TESTING ============
+    // ============ DEV-ONLY TESTING ============
 
     function verify(bytes32[] calldata proof, bytes32 root)
         public
@@ -130,24 +126,36 @@ contract Kiftables is
         return MerkleProof.verify(proof, root, leaf);
     }
 
-    // ============ Airdrop ============
+    function counter() public view returns (uint256) {
+        return _currentIndex;
+    }
 
-    // this will mint 1000 tokens to the contract
-    // these can be transferred to contributors etc
+    function revealCount() external view returns (uint256) {
+        return lastTokenRevealed;
+    }
+
+    function getSeedForBatch(uint256 batch)
+        public
+        view
+        returns (uint256 seed)
+    {
+        return batchToSeed[batch];
+    }
+
+    // ============ Treasury ============
+
     function treasuryMint() public onlyOwner {
+        require(treasuryMinted == false, "Treasury can only be minted once");
 
-        require(treasuryMinted == false, 'Treasury can only be minted once');
-
-        for (uint256 i = 0; i < maxTreasuryVans; i++) {
-            // TODO decide on _mint vs _safeMint - needs gas testrun
-            // TODO use IERC721Receiver to support address(this) instead of msg.sender
-            _mint(msg.sender, nextTokenId());
-        }
+        _safeMint(msg.sender, maxTreasuryKiftables);
 
         treasuryMinted = true;
     }
 
+    // ============ Airdrop ============
+
     // TODO should this just take a count to be transferred and be random?
+    // TODO does ERC721a implement transfer more efficiently now?
     function bulkTransfer(address _to, uint256[] memory _tokenIds)
         public
         onlyOwner
@@ -165,12 +173,10 @@ contract Kiftables is
         nonReentrant
         isCorrectPayment(PUBLIC_SALE_PRICE, numberOfTokens)
         publicSaleActive
-        canMintVans(numberOfTokens)
-        totalSupplyPerWallet(numberOfTokens)
+        canMintKiftables(numberOfTokens)
+        maxKiftablesPerWallet(numberOfTokens)
     {
-        for (uint256 i = 0; i < numberOfTokens; i++) {
-            _safeMint(msg.sender, nextTokenId());
-        }
+        _safeMint(msg.sender, numberOfTokens);
     }
 
     function mintCommunitySale(
@@ -181,27 +187,25 @@ contract Kiftables is
         payable
         nonReentrant
         communitySaleActive
-        canMintVans(numberOfTokens)
+        canMintKiftables(numberOfTokens)
         isCorrectPayment(COMMUNITY_SALE_PRICE, numberOfTokens)
         isValidMerkleProof(merkleProof, communityListMerkleRoot)
     {
         uint256 numAlreadyMinted = communityMintCounts[msg.sender];
 
         require(
-            numAlreadyMinted + numberOfTokens <= MAX_VANS_PER_WALLET,
-            "Max vans to mint in community sale is five"
+            numAlreadyMinted + numberOfTokens <= MAX_KIFTABLES_PER_WALLET,
+            "Max kiftables to mint in community sale is five"
         );
 
         require(
-            tokenCounter.current() + numberOfTokens <= maxCommunitySaleVans,
-            "Not enough vans remaining to mint"
+            _totalMinted() + numberOfTokens <= maxCommunitySaleKiftables,
+            "Not enough kiftables remaining to mint"
         );
 
         communityMintCounts[msg.sender] = numAlreadyMinted + numberOfTokens;
 
-        for (uint256 i = 0; i < numberOfTokens; i++) {
-            _safeMint(msg.sender, nextTokenId());
-        }
+        _safeMint(msg.sender, numberOfTokens);
     }
 
     // ============ PUBLIC READ-ONLY FUNCTIONS ============
@@ -219,7 +223,7 @@ contract Kiftables is
     }
 
     function count() public view returns (uint256) {
-        return tokenCounter.current();
+        return _totalMinted();
     }
 
     // ============ OWNER-ONLY ADMIN FUNCTIONS ============
@@ -262,15 +266,6 @@ contract Kiftables is
         communityListMerkleRoot = _merkleRoot;
     }
 
-    function setAirdropListMerkleRoot(bytes32 _merkleRoot) external onlyOwner {
-        airdropMerkleRoot = _merkleRoot;
-    }
-
-    // TODO currently defaulting back to reverse check using ownerOf(tokenId)
-    function isContentOwned(string memory _uri) public view returns (bool) {
-        return existingURIs[_uri] == 1;
-    }
-
     function withdraw() public payable onlyOwner {
         (bool success, ) = payable(msg.sender).call{
             value: address(this).balance
@@ -283,8 +278,8 @@ contract Kiftables is
     // batchNumber belongs to [0, TOKEN_LIMIT/REVEAL_BATCH_SIZE]
     function revealNextBatch() public {
         require(
-            totalSupply >= (lastTokenRevealed + REVEAL_BATCH_SIZE),
-            "totalSupply too low"
+            maxKiftables >= (lastTokenRevealed + REVEAL_BATCH_SIZE),
+            "maxKiftables too low"
         );
 
         // requesting randomness
@@ -302,23 +297,19 @@ contract Kiftables is
         uint256[] memory randomWords
     ) internal override {
         require(
-            totalSupply >=
-                (lastTokenRevealed + REVEAL_BATCH_SIZE),
-            "totalSupply too low"
+            maxKiftables >= (lastTokenRevealed + REVEAL_BATCH_SIZE),
+            "maxKiftables too low"
         );
         setBatchSeed(randomWords[0]);
     }
 
-    // ============ SUPPORTING FUNCTIONS ============
+    // ============ ERC721A FUNCTIONS ============
 
-    function nextTokenId() private returns (uint256) {
-        tokenCounter.increment();
-        return tokenCounter.current();
-    }
-
-    // ============ FUNCTION OVERRIDES ============
-    function _burn(uint256 _tokenId) internal override(ERC721) {
-        super._burn(_tokenId);
+    /**
+     * Overrides ERC721A to start at index 1
+     */
+    function _startTokenId() internal view virtual override returns (uint256) {
+        return 0;
     }
 
     /**
@@ -328,12 +319,12 @@ contract Kiftables is
         public
         view
         virtual
-        override
+        override(ERC721A)
         returns (string memory)
     {
-        require(_exists(_tokenId), "Nonexistent token");        // does this need to be here?
+        require(_exists(_tokenId), "Nonexistent token"); // does this need to be here?
 
-        if (_tokenId >= lastTokenRevealed) {
+        if (lastTokenRevealed == 0 || _tokenId > lastTokenRevealed) {
             return preRevealBaseURI;
         }
 
