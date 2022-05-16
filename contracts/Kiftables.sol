@@ -303,11 +303,13 @@ contract Kiftables is
         setBatchSeed(randomWords[0]);
     }
 
+    // ============ ERC721A FUNCTIONS ============
+
     /**
      * Overrides ERC721A to start at index 1
      */
     function _startTokenId() internal view virtual override returns (uint256) {
-        return 1;
+        return 0;
     }
 
     /**
@@ -322,9 +324,7 @@ contract Kiftables is
     {
         require(_exists(_tokenId), "Nonexistent token"); // does this need to be here?
 
-        // this cant be >= otherwise the last token cant be revealed
-        // @Lev, can you confirm this is without >= ?
-        if (_tokenId >= lastTokenRevealed) {
+        if (lastTokenRevealed == 0 || _tokenId > lastTokenRevealed) {
             return preRevealBaseURI;
         }
 

@@ -16,27 +16,15 @@ describe('BatchReveal', async () => {
     // deploy
     const kiftables = await deployAllContracts();
 
-    const iMintCount = await kiftables.count();
-    console.log('Initial Mint Count: ', iMintCount);
-
-    const idx = await kiftables.counter();
-    console.log('Start idx: ', idx)
-
-    const revealedCount = await kiftables.revealCount();
-    console.log('Reveal Count: ', revealedCount)
-
-    let batchToSeed = await kiftables.batchToSeed(0);
-    console.log('Batch to Seed: ', batchToSeed)
-
     // treasury mint.
     await kiftables.connect(owner).treasuryMint();
-    // TokenIds 1 - 1000 are now minted to owner
+    // TokenIds 0 - 999 are now minted to owner
 
     console.log('************* PREREVEAL *************');
 
     // confirm metadata isnt revealed yet
-    const firstFive = generateTokenIdArray(2, 3); // [1,2,3]
-    const lastFive = generateTokenIdArray(998, 3); // [998, 998, 1000]
+    const firstFive = generateTokenIdArray(0, 3); // [0,1,2]
+    const lastFive = generateTokenIdArray(997, 3); // [997, 998, 999]
     await asyncForEach([...firstFive, ...lastFive], async (id, idx) => {
       let uri = await kiftables.tokenURI(id);
       console.log(`Uri for :: ${id} :: ${uri}`);
@@ -44,9 +32,9 @@ describe('BatchReveal', async () => {
     });
 
     console.log('************* MINT 1001 *************');
-    // 1000 tokens minted in constructor. Mint another 1001 so we're at 2001
-    // 1 batch of
-    // 1 over into second, un-revealed batch
+    // 1000 tokens minted in constructor. Mint another 1001 so we're at 2000
+    // 1 batch of 1000 minted tokens [0 - 999]
+    // 1 over into second, un-revealed batch [1000 - 1999]
     let mintCount = 1001;
     let amount = parseFloat((0.1 * mintCount).toString()).toFixed(1); // hack city
     await kiftables.setIsPublicSaleActive(true);
@@ -73,11 +61,11 @@ describe('BatchReveal', async () => {
     console.log('Seed1: ', seed1.toString());
 
     // tokenIds < 2000 should return a valid int.json file. 2001 returns baseUri
-    await asyncForEach([1, 2, 3, 2000, 2001], async (id, idx) => {
+    await asyncForEach([0, 1, 2, 1999, 2000], async (id, idx) => {
       let uri = await kiftables.tokenURI(id);
       let shuffledId = await kiftables.getShuffledTokenId(id);
       console.log(`Uri for :: ${id} :: ${shuffledId} :: ${uri}`);
-      if (id >= 2000) {
+      if (id >= 1999) {
         // expect(uri.indexOf(IPFS_BASE_URL)).to.lessThan(0);
       } else {
         expect(uri.indexOf(IPFS_BASE_URL)).to.equal(0);
@@ -102,11 +90,11 @@ describe('BatchReveal', async () => {
     // 2000 is from batch 1.
     // 2001 -> 3000 are revealed in batch 2.
     // 3001 is minted but not revealed
-    await asyncForEach([2000, 2001, 3000, 3001], async (id, idx) => {
+    await asyncForEach([1999, 2000, 2999, 3000], async (id, idx) => {
       let uri = await kiftables.tokenURI(id);
       let shuffledId = await kiftables.getShuffledTokenId(id);
       console.log(`Uri for :: ${id} :: ${shuffledId} :: ${uri}`);
-      if (id >= 3000) {
+      if (id >= 2999) {
         // expect(uri.indexOf(IPFS_BASE_URL)).to.lessThan(0);
       } else {
         // expect(uri.indexOf(IPFS_BASE_URL)).to.equal(0);
@@ -140,11 +128,12 @@ describe('BatchReveal', async () => {
 
     await asyncForEach(
       [
-        1, 2, 3, 1000, 1001, 1002, 2001, 2001, 2002, 3000, 3001, 3002, 4000,
+        1, 2, 3, 1000, 1001, 1002, 2000, 2001, 2002, 3000, 3001, 3002, 4000,
         4001, 4002, 5000, 5001, 5002, 6000, 6001, 6002, 6003, 7000, 7001, 7002,
         8000, 8001, 8002, 9000, 9001, 9002, 9998, 9999, 10000
       ],
       async (id, idx) => {
+        id = id - 1 // hack as we move to base 0
         let uri = await kiftables.tokenURI(id);
         let shuffledId = await kiftables.getShuffledTokenId(id);
         console.log(`Uri for tokenId: ${id.toString().padStart(4, '0')} :: shuffledId: ${shuffledId} :: path: ${uri}`);
