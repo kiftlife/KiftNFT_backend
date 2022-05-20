@@ -119,7 +119,6 @@ contract Kiftables is
     function verify(bytes32[] calldata proof, bytes32 root)
         public
         view
-        onlyOwner
         returns (bool)
     {
         bytes32 leaf = keccak256(abi.encodePacked(msg.sender));
@@ -134,11 +133,7 @@ contract Kiftables is
         return lastTokenRevealed;
     }
 
-    function getSeedForBatch(uint256 batch)
-        public
-        view
-        returns (uint256 seed)
-    {
+    function getSeedForBatch(uint256 batch) public view returns (uint256 seed) {
         return batchToSeed[batch];
     }
 
