@@ -6,6 +6,11 @@ import {
 import { Token, User } from '../generated/schema'
 
 
+// TODO: create a new event handler for reveal which uses contract.tokenURI to get the newly
+// revealed token locations.
+// REFERENCES: 
+// - https://github.com/dabit3/building-a-subgraph-workshop
+// - https://github.com/dabit3/cryptocoven-api/blob/main/src/mapping.ts
 
 export function handleTransfer(event: TransferEvent): void {
   console.info(`Received Transfer event ${event.address}`)

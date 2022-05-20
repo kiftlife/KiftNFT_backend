@@ -22,4 +22,6 @@ dataSources:
       eventHandlers:
         - event: Transfer(indexed address,indexed address,indexed uint256)
           handler: handleTransfer
+        # - event: Reveal(indexed address,indexed address,indexed uint256)
+        #   handler: handleReveal
       file: ./src/mapping.ts
