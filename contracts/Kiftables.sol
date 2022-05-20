@@ -33,9 +33,9 @@ contract Kiftables is
     string private preRevealBaseURI;
 
     // uint256 public constant MAX_KIFTABLES_PER_WALLET = 5;
-    uint256 public constant MAX_KIFTABLES_PER_WALLET = 7000; // set back to 5 after dev
+    uint256 public constant MAX_KIFTABLES_PER_WALLET = 10000; // set back to 5 after dev
     uint256 public maxKiftables = 10000;
-    uint256 public maxCommunitySaleKiftables = 7000;
+    uint256 public maxCommunitySaleKiftables = 10000;
     uint256 public maxTreasuryKiftables = 1000;
     bool public treasuryMinted = false;
 
