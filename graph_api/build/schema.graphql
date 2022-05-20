@@ -1,0 +1,28 @@
+type Token @entity {
+  id: ID!
+  tokenID: BigInt!
+  tokenURI: String!
+  # externalURL: String!
+  ipfsURI: String!
+  image: String!
+  name: String!
+  description: String!
+  type: String!
+  updatedAtTimestamp: BigInt!
+  owner: User!
+}
+
+type User @entity {
+  id: ID!
+  tokens: [Token!]! @derivedFrom(field: "owner")
+}
+
+type _Schema_
+  @fulltext(
+    name: "vanSearch"
+    language: en
+    algorithm: rank
+    include: [
+      { entity: "Token", fields: [{ name: "name" }, { name: "description" }] }
+    ]
+  )
