@@ -58,9 +58,6 @@ describe('BatchReveal', async () => {
     lastTokenRevealed = await kiftables.revealCount();
     console.log('Revealed up until: ', lastTokenRevealed);
 
-    console.warn(
-      '!!!!!!!!!!!! CAREFUL, running this can take 10+ minutes !!!!!!!!!!!!'
-    );
     const shuffledIds = [];
     // Note: To run the full test, change 100 to 10000  => this can take 60+ minutes
     const tokens = generateTokenIdArray(0, 100);
