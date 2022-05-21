@@ -1,4 +1,4 @@
-specVersion: 0.0.2
+specVersion: 0.0.5
 schema:
   file: ./schema.graphql
 dataSources:
@@ -8,7 +8,7 @@ dataSources:
     source:
       address: "0xbEfaC2655AA988d0DC866Bb100A3512760856F47"
       abi: Kiftables
-      startBlock: 10659158
+      startBlock: 10715641
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.5
