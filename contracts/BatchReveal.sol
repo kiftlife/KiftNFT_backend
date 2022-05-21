@@ -13,7 +13,7 @@ abstract contract BatchReveal {
         int128 end;
     }
 
-    event LogReveal(uint256 lastTokenRevealed);
+    event LogReveal(uint256 indexed lastTokenRevealed);
 
     // Forked from openzeppelin
     /**

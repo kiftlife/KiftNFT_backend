@@ -51,6 +51,10 @@ contract Kiftables is
     bytes32 private immutable s_keyHash;
     uint64 private immutable s_subscriptionId;
 
+    // ============ EVENTS ============
+
+    event MintTreasury(address indexed to, uint256 amount);
+
     // ============ ACCESS CONTROL/SANITY MODIFIERS ============
 
     modifier publicSaleActive() {
@@ -142,6 +146,8 @@ contract Kiftables is
         _safeMint(msg.sender, maxTreasuryKiftables);
 
         treasuryMinted = true;
+
+        emit MintTreasury(msg.sender, maxTreasuryKiftables);
     }
 
     // ============ Airdrop ============
