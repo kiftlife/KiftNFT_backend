@@ -4,7 +4,6 @@
 
 const { ethers } = require('hardhat');
 require('dotenv').config();
-const { IPFS_BASE_URL, BASE_PREREVEAL_URL } = require('../config/config');
 const { ALCHEMY_API_KEY, PRIVATE_KEY, CONTRACT_ADDRESS, GNOSIS_ADDRESS } =
   process.env;
 
