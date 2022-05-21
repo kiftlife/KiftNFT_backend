@@ -1,11 +1,10 @@
 pragma solidity ^0.8.2;
 
-import "hardhat/console.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
 abstract contract BatchReveal {
-    uint256 public constant TOKEN_LIMIT = 10000;
-    uint256 public constant REVEAL_BATCH_SIZE = 200;
+    uint256 public constant TOKEN_LIMIT = 1000;
+    uint256 public constant REVEAL_BATCH_SIZE = 100;
     mapping(uint256 => uint256) public batchToSeed;
     uint256 public lastTokenRevealed = 0; // in [0-9999]. offset not included
 
@@ -13,6 +12,8 @@ abstract contract BatchReveal {
         int128 start;
         int128 end;
     }
+
+    event LogReveal(uint256 lastTokenRevealed);
 
     // Forked from openzeppelin
     /**
@@ -32,14 +33,11 @@ abstract contract BatchReveal {
         int128 start,
         int128 end,
         uint256 lastIndex
-    ) private view returns (uint256) {
+    ) private pure returns (uint256) {
         uint256 positionToAssume = lastIndex;
         for (uint256 j = 0; j < lastIndex; j++) {
             int128 rangeStart = ranges[j].start;
             int128 rangeEnd = ranges[j].end;
-            // console.log("[Add Range] Start and end");
-            // console.logInt(rangeStart);
-            // console.logInt(rangeEnd);
             if (start < rangeStart && positionToAssume == lastIndex) {
                 positionToAssume = j;
             }
@@ -57,7 +55,6 @@ abstract contract BatchReveal {
         for (uint256 pos = lastIndex; pos > positionToAssume; pos--) {
             ranges[pos] = ranges[pos - 1];
         }
-        // console.log('Position to assume: ', positionToAssume);
         ranges[positionToAssume] = Range(start, min(end, intTOKEN_LIMIT));
         lastIndex++;
         if (end > intTOKEN_LIMIT) {
@@ -80,11 +77,7 @@ abstract contract BatchReveal {
                 int256(getFreeTokenId(batchToSeed[i], ranges))
             );
             int128 end = start + int128(int256(REVEAL_BATCH_SIZE));
-            // console.log("[Building Jumps] Start and end");
-            // console.logInt(start);
-            // console.logInt(end);
             lastIndex = addRange(ranges, start, end, lastIndex);
-            // console.log("[Building Jumps] Last Index: ", lastIndex);
         }
         return ranges;
     }
@@ -92,36 +85,25 @@ abstract contract BatchReveal {
     // set back to internal from public when out of dev
     function getShuffledTokenId(uint256 startId) public view returns (uint256) {
         uint256 batch = startId / REVEAL_BATCH_SIZE;
-        console.log("[Get Shuffled] Batch: ", batch);
         Range[RANGE_LENGTH] memory ranges = buildJumps(batch);
         uint256 positionsToMove = (startId % REVEAL_BATCH_SIZE) +
             batchToSeed[batch];
-        console.log("[Get Shuffled] **** Positions to move: ", positionsToMove);
         return getFreeTokenId(positionsToMove, ranges);
     }
 
     function getFreeTokenId(
         uint256 positionsToMoveStart,
         Range[RANGE_LENGTH] memory ranges
-    ) private view returns (uint256) {
+    ) private pure returns (uint256) {
         int128 positionsToMove = int128(int256(positionsToMoveStart));
         int128 id = 0;
         for (uint256 round = 0; round < 2; round++) {
-            // console.log('ROUND: ', round);
             for (uint256 i = 0; i < RANGE_LENGTH; i++) {
                 int128 start = ranges[i].start;
                 int128 end = ranges[i].end;
-                console.log('[Get Free Token] Searching range: ', i);
-                console.log("[Get Free Token] Start and end");
-                console.logInt(start);
-                console.logInt(end);
                 if (id < start) {
-                    console.log("[Get Free Token] Id and start");
-                    console.logInt(id);
-                    console.logInt(start);
                     int128 finalId = id + positionsToMove;
                     if (finalId < start) {
-                        console.log('[Get Free Token] Final Id: ', uint256(uint128(finalId)));
                         return uint256(uint128(finalId));
                     } else {
                         positionsToMove -= start - id;
@@ -136,15 +118,10 @@ abstract contract BatchReveal {
                 id = 0;
             }
         }
-        console.log(
-            "[Contract] free token id: ",
-            uint256(uint128(id + positionsToMove))
-        );
         return uint256(uint128(id + positionsToMove));
     }
 
     function setBatchSeed(uint256 randomness) internal {
-        // console.log("[Contract] Incoming Randomness: ", randomness);
         uint256 batchNumber;
         unchecked {
             batchNumber = lastTokenRevealed / REVEAL_BATCH_SIZE;
@@ -154,5 +131,7 @@ abstract contract BatchReveal {
         batchToSeed[batchNumber] =
             randomness %
             (TOKEN_LIMIT - (batchNumber * REVEAL_BATCH_SIZE));
+        
+        emit LogReveal(lastTokenRevealed);
     }
 }

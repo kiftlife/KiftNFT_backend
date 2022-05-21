@@ -1,9 +1,7 @@
 const { ethers } = require('hardhat');
 require('dotenv').config();
 const contract = require('../src/artifacts/contracts/Kiftables.sol/Kiftables.json');
-const { BASE_PREREVEAL_URL , IPFS_BASE_URL} = require('../config/config');
-const { ALCHEMY_API_KEY, PRIVATE_KEY, CONTRACT_ADDRESS, TEST_WALLET_OWNER } =
-  process.env;
+const { ALCHEMY_API_KEY, PRIVATE_KEY, CONTRACT_ADDRESS } = process.env;
 const alchemyProvider = new ethers.providers.AlchemyProvider(
   (network = 'rinkeby'),
   ALCHEMY_API_KEY
@@ -16,27 +14,23 @@ const kiftContract = new ethers.Contract(
 );
 
 async function main() {
-    const preRevealUrl = await kiftContract.tokenURI(1);
-    console.log('Pre-reveal URL: ', preRevealUrl);
-    
-    const tx = await kiftContract.reveal();
-    const receipt = await tx.wait();
-    const { transactionIndex, blockHash, transactionHash } = receipt;
-    console.log(`REVEAL THE METADATA complete: `, {
-      transactionIndex,
-      blockHash,
-      transactionHash
-    });
+  let revealCount = await kiftContract.revealCount();
+  console.log(`Reveal Count: ${revealCount}`);
 
-    revealed = await kiftContract.revealed();
-    
-    console.log('Revealed? ', revealed)
+  // const tx = await kiftContract.revealNextBatch();
+  // const receipt = await tx.wait();
+  // const { transactionIndex, blockHash, transactionHash } = receipt;
+  // console.log(`REVEAL BATCH COMPLETE: `, {
+  //   transactionIndex,
+  //   blockHash,
+  //   transactionHash
+  // });
 
-    const revealedUrl = await kiftContract.tokenURI(1);
-    console.log('Revealed URL: ', revealedUrl);
 }
 
-main().then(() => process.exit(0)).catch((error) => {
-    console.error(error)
-    process.exit(1)
-})
+main()
+  .then(() => process.exit(0))
+  .catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });

@@ -32,21 +32,18 @@ contract Kiftables is
     string public baseURI; // ifps root dir
     string private preRevealBaseURI;
 
-    // uint256 public constant MAX_KIFTABLES_PER_WALLET = 5;
-    uint256 public constant MAX_KIFTABLES_PER_WALLET = 10000; // set back to 5 after dev
-    uint256 public maxKiftables = 10000;
-    uint256 public maxCommunitySaleKiftables = 10000;
-    uint256 public maxTreasuryKiftables = 1000;
+    uint256 public constant MAX_KIFTABLES_PER_WALLET = 1000; // set back to 5 after dev
+    uint256 public maxKiftables = 1000; // set back to 10000 after dev
+    uint256 public maxCommunitySaleKiftables = 100; // set back to 7000 after dev
+    uint256 public maxTreasuryKiftables = 100; // set back to 1000 after dev
     bool public treasuryMinted = false;
 
-    uint256 public constant PUBLIC_SALE_PRICE = 0.10 ether;
+    uint256 public constant PUBLIC_SALE_PRICE = 0.001 ether;        // set back to 0.10 after dev
     bool public isPublicSaleActive;
 
-    uint256 public constant COMMUNITY_SALE_PRICE = 0.08 ether;
+    uint256 public constant COMMUNITY_SALE_PRICE = 0.0008 ether;    // set back to 0.08 after dev
     bool public isCommunitySaleActive;
-
     bytes32 public communityListMerkleRoot;
-
     mapping(address => uint256) public communityMintCounts;
 
     // Constants from https://docs.chain.link/docs/vrf-contracts/
@@ -149,7 +146,6 @@ contract Kiftables is
 
     // ============ Airdrop ============
 
-    // TODO should this just take a count to be transferred and be random?
     // TODO does ERC721a implement transfer more efficiently now?
     function bulkTransfer(address _to, uint256[] memory _tokenIds)
         public
@@ -296,15 +292,6 @@ contract Kiftables is
             "maxKiftables too low"
         );
         setBatchSeed(randomWords[0]);
-    }
-
-    // ============ ERC721A FUNCTIONS ============
-
-    /**
-     * Overrides ERC721A to start at index 1
-     */
-    function _startTokenId() internal view virtual override returns (uint256) {
-        return 0;
     }
 
     /**

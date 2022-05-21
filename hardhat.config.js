@@ -1,5 +1,6 @@
 require('@nomiclabs/hardhat-waffle');
 require("@nomiclabs/hardhat-web3");
+require("@nomiclabs/hardhat-etherscan");
 require('hardhat-gas-reporter');
 require('dotenv').config();
 
@@ -7,7 +8,8 @@ const {
   ALCHEMY_POLYGON_API_URL,
   ALCHEMY_RINKEBY_API_URL,
   PRIVATE_KEY,
-  COINMARKETCAP_KEY
+  COINMARKETCAP_KEY,
+  ETHERSCAN_KEY
 } = process.env;
 
 // This is a sample Hardhat task. To learn how to create your own go to
@@ -39,10 +41,13 @@ module.exports = {
       url: ALCHEMY_RINKEBY_API_URL,
       accounts: [PRIVATE_KEY]
     },
-    polygon_mumbai: {
-      url: ALCHEMY_POLYGON_API_URL,
-      accounts: [PRIVATE_KEY]
-    }
+    // polygon_mumbai: {
+    //   url: ALCHEMY_POLYGON_API_URL,
+    //   accounts: [PRIVATE_KEY]
+    // }
+  },
+  etherscan: {
+    apiKey: ETHERSCAN_KEY,
   },
   gasReporter: {
     currency: 'USD',
