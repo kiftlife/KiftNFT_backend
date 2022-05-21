@@ -84,7 +84,7 @@ abstract contract BatchReveal {
             // console.logInt(start);
             // console.logInt(end);
             lastIndex = addRange(ranges, start, end, lastIndex);
-            // console.log("[Building Jumps] Last Index: ", lastIndex);
+            console.log("[Building Jumps] Last Index: ", lastIndex);
         }
         return ranges;
     }
