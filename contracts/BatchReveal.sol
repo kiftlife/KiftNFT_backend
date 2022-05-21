@@ -1,8 +1,10 @@
 pragma solidity ^0.8.2;
 
+import "@openzeppelin/contracts/utils/Strings.sol";
+
 abstract contract BatchReveal {
-    uint256 public constant TOKEN_LIMIT = 10000;
-    uint256 public constant REVEAL_BATCH_SIZE = 1000;
+    uint256 public constant TOKEN_LIMIT = 1000;
+    uint256 public constant REVEAL_BATCH_SIZE = 100;
     mapping(uint256 => uint256) public batchToSeed;
     uint256 public lastTokenRevealed = 0; // in [0-9999]. offset not included
 
@@ -10,6 +12,8 @@ abstract contract BatchReveal {
         int128 start;
         int128 end;
     }
+
+    event LogReveal(uint256 lastTokenRevealed);
 
     // Forked from openzeppelin
     /**
@@ -23,6 +27,7 @@ abstract contract BatchReveal {
     int128 constant intTOKEN_LIMIT = int128(int256(TOKEN_LIMIT));
 
     // ranges include the start but not the end [start, end)
+    // TODO remove view and set back to pure after testing
     function addRange(
         Range[RANGE_LENGTH] memory ranges,
         int128 start,
@@ -66,6 +71,7 @@ abstract contract BatchReveal {
     {
         Range[RANGE_LENGTH] memory ranges;
         uint256 lastIndex = 0;
+
         for (uint256 i = 0; i < lastBatch; i++) {
             int128 start = int128(
                 int256(getFreeTokenId(batchToSeed[i], ranges))
@@ -91,7 +97,6 @@ abstract contract BatchReveal {
     ) private pure returns (uint256) {
         int128 positionsToMove = int128(int256(positionsToMoveStart));
         int128 id = 0;
-
         for (uint256 round = 0; round < 2; round++) {
             for (uint256 i = 0; i < RANGE_LENGTH; i++) {
                 int128 start = ranges[i].start;
@@ -126,5 +131,7 @@ abstract contract BatchReveal {
         batchToSeed[batchNumber] =
             randomness %
             (TOKEN_LIMIT - (batchNumber * REVEAL_BATCH_SIZE));
+        
+        emit LogReveal(lastTokenRevealed);
     }
 }
