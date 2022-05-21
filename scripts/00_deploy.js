@@ -1,7 +1,7 @@
-const { ethers } = require('hardhat');
+const hre = require('hardhat');
 const { BASE_PREREVEAL_URL } = require('../config/config');
 async function main() {
-  const Kiftables = await ethers.getContractFactory('Kiftables');
+  const Kiftables = await hre.ethers.getContractFactory('Kiftables');
 
   const vrfCoordinator = '0x6168499c0cFfCaCD319c818142124B7A15E857ab';
   const s_keyHash =
@@ -18,6 +18,19 @@ async function main() {
   await kiftables.deployed();
 
   console.log('Kiftables NFT Contract deployed to:', kiftables.address);
+
+
+  // TODO this doesnt work
+  await hre.run("verify:verify", {
+    address: kiftables.address,
+    constructorArguments: [
+      BASE_PREREVEAL_URL,
+      s_keyHash,
+      vrfCoordinator,
+      subscriptionId
+    ],
+  });
+
 }
 
 main()

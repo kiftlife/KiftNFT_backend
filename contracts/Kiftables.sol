@@ -34,7 +34,7 @@ contract Kiftables is
 
     uint256 public constant MAX_KIFTABLES_PER_WALLET = 1000; // set back to 5 after dev
     uint256 public maxKiftables = 1000; // set back to 10000 after dev
-    uint256 public maxCommunitySaleKiftables = 100; // set back to 7000 after dev
+    uint256 public maxCommunitySaleKiftables = 900; // set back to 7000 after dev
     uint256 public maxTreasuryKiftables = 100; // set back to 1000 after dev
     bool public treasuryMinted = false;
 
@@ -197,7 +197,7 @@ contract Kiftables is
 
         require(
             _totalMinted() + numberOfTokens <= maxCommunitySaleKiftables,
-            "Not enough kiftables remaining to mint"
+            "Not enough kiftables remaining to mint in community sale"
         );
 
         communityMintCounts[msg.sender] = numAlreadyMinted + numberOfTokens;

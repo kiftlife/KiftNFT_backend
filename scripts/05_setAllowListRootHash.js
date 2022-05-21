@@ -47,10 +47,10 @@ async function main() {
   const rootHash = buf2hex(merkleTree.getRoot());
   console.log('Root Hash: ', rootHash);
 
-  const tx = await kiftContract.setCommunityListMerkleRoot(rootHash);
-  await tx.wait();
+  // const tx = await kiftContract.setCommunityListMerkleRoot(rootHash);
+  // await tx.wait();
 
-  console.log('AllowList Set');
+  // console.log('AllowList Set');
 }
 
 main()
