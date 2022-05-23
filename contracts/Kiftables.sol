@@ -33,7 +33,7 @@ contract Kiftables is
     string public baseURI;
     string public preRevealBaseURI;
 
-    uint256 public constant MAX_KIFTABLES_PER_WALLET = 1000; // set back to 5 after dev
+    uint256 public constant MAX_KIFTABLES_PER_WALLET = 8000; // set back to 5 after dev
     uint256 public constant maxKiftables = 10000; // set back to 10000 after dev
     uint256 public constant maxCommunitySaleKiftables = 7000; // set back to 7000 after dev
     uint256 public constant maxTreasuryKiftables = 1000; // set back to 1000 after dev
@@ -140,9 +140,9 @@ contract Kiftables is
     //     return lastTokenRevealed;
     // }
 
-    // function getSeedForBatch(uint256 batch) public view returns (uint256 seed) {
-    //     return batchToSeed[batch];
-    // }
+    function getSeedForBatch(uint256 batch) public view returns (uint256 seed) {
+        return batchToSeed[batch];
+    }
 
     // ============ Treasury ============
 

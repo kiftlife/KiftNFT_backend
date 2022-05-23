@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
 
 contract MockVRFCoordinator {
-    uint256 internal counter = 1793829348;
+    uint256 internal counter = 12902341;
 
     function requestRandomWords(
         bytes32,
@@ -17,6 +17,6 @@ contract MockVRFCoordinator {
         uint256[] memory randomWords = new uint256[](1);
         randomWords[0] = counter;
         consumer.rawFulfillRandomWords(requestId, randomWords);
-        counter += 1;
+        counter += 12902341;
     }
 }
