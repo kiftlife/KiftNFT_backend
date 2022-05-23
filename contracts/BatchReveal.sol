@@ -3,8 +3,8 @@ pragma solidity ^0.8.2;
 import "@openzeppelin/contracts/utils/Strings.sol";
 
 abstract contract BatchReveal {
-    uint256 public constant TOKEN_LIMIT = 1000;
-    uint256 public constant REVEAL_BATCH_SIZE = 100;
+    uint256 public constant TOKEN_LIMIT = 10000;
+    uint256 public constant REVEAL_BATCH_SIZE = 200;
     mapping(uint256 => uint256) public batchToSeed;
     uint256 public lastTokenRevealed = 0; // in [0-9999]. offset not included
 

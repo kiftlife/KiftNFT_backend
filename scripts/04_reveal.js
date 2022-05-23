@@ -17,14 +17,14 @@ async function main() {
   let revealCount = await kiftContract.revealCount();
   console.log(`Reveal Count: ${revealCount}`);
 
-  // const tx = await kiftContract.revealNextBatch();
-  // const receipt = await tx.wait();
-  // const { transactionIndex, blockHash, transactionHash } = receipt;
-  // console.log(`REVEAL BATCH COMPLETE: `, {
-  //   transactionIndex,
-  //   blockHash,
-  //   transactionHash
-  // });
+  const tx = await kiftContract.revealNextBatch();
+  const receipt = await tx.wait();
+  const { transactionIndex, blockHash, transactionHash } = receipt;
+  console.log(`REVEAL BATCH COMPLETE: `, {
+    transactionIndex,
+    blockHash,
+    transactionHash
+  });
 
 }
 

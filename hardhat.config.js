@@ -1,6 +1,7 @@
-require('@nomiclabs/hardhat-waffle');
-require("@nomiclabs/hardhat-web3");
-require("@nomiclabs/hardhat-etherscan");
+require('@nomiclabs/hardhat-web3');
+require('@nomicfoundation/hardhat-chai-matchers');
+require('@nomiclabs/hardhat-ethers');
+require('@nomiclabs/hardhat-etherscan');
 require('hardhat-gas-reporter');
 require('dotenv').config();
 
@@ -39,15 +40,16 @@ module.exports = {
     },
     rinkeby: {
       url: ALCHEMY_RINKEBY_API_URL,
-      accounts: [PRIVATE_KEY]
-    },
+      accounts: [PRIVATE_KEY],
+      blockGasLimit: 8000000
+    }
     // polygon_mumbai: {
     //   url: ALCHEMY_POLYGON_API_URL,
     //   accounts: [PRIVATE_KEY]
     // }
   },
   etherscan: {
-    apiKey: ETHERSCAN_KEY,
+    apiKey: ETHERSCAN_KEY
   },
   gasReporter: {
     currency: 'USD',

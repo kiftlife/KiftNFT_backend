@@ -29,20 +29,20 @@ contract Kiftables is
 {
     using Counters for Counters.Counter;
 
-    string public baseURI; // ifps root dir
-    string private preRevealBaseURI;
+    string public baseURI;
+    string public preRevealBaseURI;
 
     uint256 public constant MAX_KIFTABLES_PER_WALLET = 1000; // set back to 5 after dev
-    uint256 public maxKiftables = 1000; // set back to 10000 after dev
-    uint256 public maxCommunitySaleKiftables = 900; // set back to 7000 after dev
-    uint256 public maxTreasuryKiftables = 100; // set back to 1000 after dev
+    uint256 public constant maxKiftables = 10000; // set back to 10000 after dev
+    uint256 public constant maxCommunitySaleKiftables = 7000; // set back to 7000 after dev
+    uint256 public constant maxTreasuryKiftables = 1000; // set back to 1000 after dev
     bool public treasuryMinted = false;
 
-    uint256 public constant PUBLIC_SALE_PRICE = 0.001 ether;        // set back to 0.10 after dev
-    bool public isPublicSaleActive;
+    uint256 public constant PUBLIC_SALE_PRICE = 0.1 ether;        // set back to 0.10 after dev
+    bool public isPublicSaleActive = false;
 
-    uint256 public constant COMMUNITY_SALE_PRICE = 0.0008 ether;    // set back to 0.08 after dev
-    bool public isCommunitySaleActive;
+    uint256 public constant COMMUNITY_SALE_PRICE = 0.08 ether;    // set back to 0.08 after dev
+    bool public isCommunitySaleActive = false;
     bytes32 public communityListMerkleRoot;
     mapping(address => uint256) public communityMintCounts;
 
@@ -58,19 +58,19 @@ contract Kiftables is
     // ============ ACCESS CONTROL/SANITY MODIFIERS ============
 
     modifier publicSaleActive() {
-        require(isPublicSaleActive, "Public sale is not open");
+        require(isPublicSaleActive, "Public sale is not active");
         _;
     }
 
     modifier communitySaleActive() {
-        require(isCommunitySaleActive, "Community sale is not open");
+        require(isCommunitySaleActive, "Community sale is not active");
         _;
     }
 
     modifier maxKiftablesPerWallet(uint256 numberOfTokens) {
         require(
             balanceOf(msg.sender) + numberOfTokens <= MAX_KIFTABLES_PER_WALLET,
-            "Max kiftables to mint is five"
+            "Max Kiftables to mint is five"
         );
         _;
     }
@@ -78,7 +78,7 @@ contract Kiftables is
     modifier canMintKiftables(uint256 numberOfTokens) {
         require(
             _totalMinted() + numberOfTokens <= maxKiftables,
-            "Not enough kiftables remaining to mint"
+            "Not enough Kiftables remaining to mint"
         );
         _;
     }
@@ -130,13 +130,13 @@ contract Kiftables is
         return _currentIndex;
     }
 
-    function revealCount() external view returns (uint256) {
-        return lastTokenRevealed;
-    }
+    // function revealCount() external view returns (uint256) {
+    //     return lastTokenRevealed;
+    // }
 
-    function getSeedForBatch(uint256 batch) public view returns (uint256 seed) {
-        return batchToSeed[batch];
-    }
+    // function getSeedForBatch(uint256 batch) public view returns (uint256 seed) {
+    //     return batchToSeed[batch];
+    // }
 
     // ============ Treasury ============
 
@@ -176,8 +176,9 @@ contract Kiftables is
         _safeMint(msg.sender, numberOfTokens);
     }
 
+    // TODO could be put back to uint8 
     function mintCommunitySale(
-        uint8 numberOfTokens,
+        uint256 numberOfTokens,
         bytes32[] calldata merkleProof
     )
         external
@@ -192,12 +193,12 @@ contract Kiftables is
 
         require(
             numAlreadyMinted + numberOfTokens <= MAX_KIFTABLES_PER_WALLET,
-            "Max kiftables to mint in community sale is five"
+            "Max Kiftables to mint in community sale is five"
         );
 
         require(
             _totalMinted() + numberOfTokens <= maxCommunitySaleKiftables,
-            "Not enough kiftables remaining to mint in community sale"
+            "Not enough Kiftables remaining to mint in community sale"
         );
 
         communityMintCounts[msg.sender] = numAlreadyMinted + numberOfTokens;
@@ -207,21 +208,22 @@ contract Kiftables is
 
     // ============ PUBLIC READ-ONLY FUNCTIONS ============
 
-    function getBaseURI() external view returns (string memory) {
-        return baseURI;
-    }
+    // TODO these can all be deleted
+    // function getBaseURI() external view returns (string memory) {
+    //     return baseURI;
+    // }
 
-    function communitySaleLive() external view returns (bool) {
-        return isCommunitySaleActive;
-    }
+    // function communitySaleLive() external view returns (bool) {
+    //     return isCommunitySaleActive;
+    // }
 
-    function publicSaleLive() external view returns (bool) {
-        return isPublicSaleActive;
-    }
+    // function publicSaleLive() external view returns (bool) {
+    //     return isPublicSaleActive;
+    // }
 
-    function count() public view returns (uint256) {
-        return _totalMinted();
-    }
+    // function count() public view returns (uint256) {
+    //     return _totalMinted();
+    // }
 
     // ============ OWNER-ONLY ADMIN FUNCTIONS ============
 
@@ -264,6 +266,7 @@ contract Kiftables is
     }
 
     function withdraw() public payable onlyOwner {
+        // TODO add withdraw event
         (bool success, ) = payable(msg.sender).call{
             value: address(this).balance
         }("");
@@ -284,7 +287,7 @@ contract Kiftables is
             s_keyHash,
             s_subscriptionId,
             3, // requestConfirmations
-            100000, // callbackGasLimit
+            100000, // callbackGasLimit         // set back to 100000
             1 // numWords
         );
     }
@@ -310,9 +313,9 @@ contract Kiftables is
         override(ERC721A)
         returns (string memory)
     {
-        require(_exists(_tokenId), "Nonexistent token"); // does this need to be here?
+        require(_exists(_tokenId), "Nonexistent token");
 
-        if (lastTokenRevealed == 0 || _tokenId > lastTokenRevealed) {
+        if (_tokenId >= lastTokenRevealed) {
             return preRevealBaseURI;
         }
 

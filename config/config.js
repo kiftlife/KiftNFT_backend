@@ -1,6 +1,7 @@
 
-const BASE_PREREVEAL_URL = `https://gateway.pinata.cloud/ipfs/QmR44zZLLBMwygbw9FCZpnvCsedooYM9VfKRhJhw5LwvE3`
-const IPFS_BASE_URL = `https://gateway.pinata.cloud/ipfs/QmTrHZFPNpjYTgEdqu4FRjxW8Y5yCkrKeQZ1N2odQNyUwt`
+const BASE_PREREVEAL_URL = `ipfs://QmYcdk2XeDwuD9UgVzviBtjR2Ru4TmnQR5zcrs2ftaEvpV`
+const IPFS_BASE_URL = `ipfs://QmTrHZFPNpjYTgEdqu4FRjxW8Y5yCkrKeQZ1N2odQNyUwt`
+
 // const BASE_PREREVEAL_URL = 'ipfs://a-placeholder-image-path';
 // const IPFS_BASE_URL = 'ifps://a-real-path'
 

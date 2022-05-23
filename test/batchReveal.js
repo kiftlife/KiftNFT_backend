@@ -8,13 +8,21 @@ const {
 } = require('./utilities');
 
 describe('BatchReveal', async () => {
+
+  it('Should run', () => {
+    console.log('Testing batch reveal');
+  })
+
   it('Successfully batch reveal 10000 tokens', async () => {
     // setup
     const [owner, addr1, addr2, addr3, addr4, addr5] =
       await ethers.getSigners();
 
+      console.log('Owner: ', owner.address);
+
     // deploy
     const kiftables = await deployAllContracts();
+    await kiftables.setBaseURI(IPFS_BASE_URL);
 
     // treasury mint.
     await kiftables.connect(owner).treasuryMint();
@@ -31,6 +39,8 @@ describe('BatchReveal', async () => {
       expect(uri).to.equal(BASE_PREREVEAL_URL);
     });
 
+
+
     console.log('************* MINT 1001 *************');
     // 1000 tokens minted in constructor. Mint another 1001 so we're at 2000
     // 1 batch of 1000 minted tokens [0 - 999]
@@ -38,17 +48,35 @@ describe('BatchReveal', async () => {
     let mintCount = 1001;
     let amount = parseFloat((0.1 * mintCount).toString()).toFixed(1); // hack city
     await kiftables.setIsPublicSaleActive(true);
-    await kiftables.setBaseURI(IPFS_BASE_URL);
+    
     await kiftables.connect(addr1).mint(mintCount, {
       value: ethers.utils.parseEther(amount)
     });
 
-    console.log('************* REVEAL 1 - 1000 *************');
-    // REVEAL 2 BATCHES [0 - 2000]  (the first 1000 in the treasure and 1000 minted by "public")
-    const tx0 = await kiftables.revealNextBatch();
-    await tx0.wait();
+    console.log('************* REVEAL TREASURY *************');
+
+    const tx = await kiftables.revealNextBatch();
+    await tx.wait();
     let lastTokenRevealed = await kiftables.revealCount();
     console.log(`Revealed up until: ${lastTokenRevealed}`);
+    // tokenIds < 2000 should return a valid int.json file. 2001 returns baseUri
+    await asyncForEach([0, 1, 2, 999, 1000], async (id, idx) => {
+      let uri = await kiftables.tokenURI(id);
+      let shuffledId = await kiftables.getShuffledTokenId(id);
+      console.log(`Uri for :: ${id} :: ${shuffledId} :: ${uri}`);
+      if (id >= 1000) {
+        expect(uri.indexOf(IPFS_BASE_URL)).to.lessThan(0);
+      } else {
+        expect(uri.indexOf(IPFS_BASE_URL)).to.equal(0);
+      }
+    });
+
+    // console.log('************* REVEAL 1 - 1000 *************');
+    // // REVEAL 2 BATCHES [0 - 2000]  (the first 1000 in the treasure and 1000 minted by "public")
+    // const tx0 = await kiftables.revealNextBatch();
+    // await tx0.wait();
+    // lastTokenRevealed = await kiftables.revealCount();
+    // console.log(`Revealed up until: ${lastTokenRevealed}`);
     console.log('************* REVEAL 1001 - 2000 *************');
     const tx1 = await kiftables.revealNextBatch();
     await tx1.wait();
@@ -133,10 +161,14 @@ describe('BatchReveal', async () => {
         8000, 8001, 8002, 9000, 9001, 9002, 9998, 9999, 10000
       ],
       async (id, idx) => {
-        id = id - 1 // hack as we move to base 0
+        id = id - 1; // hack as we move to base 0
         let uri = await kiftables.tokenURI(id);
         let shuffledId = await kiftables.getShuffledTokenId(id);
-        console.log(`Uri for tokenId: ${id.toString().padStart(4, '0')} :: shuffledId: ${shuffledId} :: path: ${uri}`);
+        console.log(
+          `Uri for tokenId: ${id
+            .toString()
+            .padStart(4, '0')} :: shuffledId: ${shuffledId} :: path: ${uri}`
+        );
         expect(uri.indexOf(IPFS_BASE_URL)).to.equal(0);
       }
     );
