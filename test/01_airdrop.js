@@ -26,7 +26,7 @@ describe('Deploy Kiftables', function () {
           CONTRIBUTOR_AIRDROP_COUNT
         ); // [1,2,3,4,5], [6,7,8,9,10] etc
         console.log(`Sending tokens ${tokenIds} to ${address}`);
-        await kiftables.connect(owner).bulkTransfer(address, tokenIds);
+        await kiftables.connect(owner).airdrop(address, tokenIds);
         const balance = await kiftables.balanceOf(address);
         expect(balance).to.equal(CONTRIBUTOR_AIRDROP_COUNT);
       }

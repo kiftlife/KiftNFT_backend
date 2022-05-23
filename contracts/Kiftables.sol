@@ -27,6 +27,7 @@ contract Kiftables is
     VRFConsumerBaseV2,
     BatchReveal
 {
+    // TODO remove
     using Counters for Counters.Counter;
 
     string public baseURI;
@@ -38,13 +39,14 @@ contract Kiftables is
     uint256 public constant maxTreasuryKiftables = 1000; // set back to 1000 after dev
     bool public treasuryMinted = false;
 
-    uint256 public constant PUBLIC_SALE_PRICE = 0.1 ether;        // set back to 0.10 after dev
+    uint256 public constant PUBLIC_SALE_PRICE = 0.1 ether; // set back to 0.10 after dev
     bool public isPublicSaleActive = false;
 
-    uint256 public constant COMMUNITY_SALE_PRICE = 0.08 ether;    // set back to 0.08 after dev
+    uint256 public constant COMMUNITY_SALE_PRICE = 0.08 ether; // set back to 0.08 after dev
     bool public isCommunitySaleActive = false;
     bytes32 public communityListMerkleRoot;
     mapping(address => uint256) public communityMintCounts;
+    mapping(address => uint256) public airdropCounts;
 
     // Constants from https://docs.chain.link/docs/vrf-contracts/
     VRFCoordinatorV2Interface COORDINATOR;
@@ -68,8 +70,12 @@ contract Kiftables is
     }
 
     modifier maxKiftablesPerWallet(uint256 numberOfTokens) {
+        uint256 numAirdropped = airdropCounts[msg.sender];
         require(
-            balanceOf(msg.sender) + numberOfTokens <= MAX_KIFTABLES_PER_WALLET,
+            balanceOf(msg.sender) -
+                numAirdropped +
+                numberOfTokens <=
+                MAX_KIFTABLES_PER_WALLET,
             "Max Kiftables to mint is five"
         );
         _;
@@ -153,11 +159,12 @@ contract Kiftables is
     // ============ Airdrop ============
 
     // TODO does ERC721a implement transfer more efficiently now?
-    function bulkTransfer(address _to, uint256[] memory _tokenIds)
+    function airdrop(address _to, uint256[] memory _tokenIds)
         public
         onlyOwner
     {
         for (uint256 i = 0; i < _tokenIds.length; i++) {
+            airdropCounts[_to]++;
             safeTransferFrom(msg.sender, _to, _tokenIds[i]);
         }
     }
@@ -176,7 +183,7 @@ contract Kiftables is
         _safeMint(msg.sender, numberOfTokens);
     }
 
-    // TODO could be put back to uint8 
+    // TODO could be put back to uint8
     function mintCommunitySale(
         uint256 numberOfTokens,
         bytes32[] calldata merkleProof
