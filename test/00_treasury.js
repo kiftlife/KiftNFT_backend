@@ -1,23 +1,33 @@
 const { expect } = require('chai');
 const { ethers } = require('hardhat');
-const {
-  deployAllContracts,
-  asyncForEach,
-  generateTokenIdArray
-} = require('./utilities');
+const { deployAllContracts } = require('./helpers/utilities');
 
-describe('Mint Treasury', function () {
-  it('Owner should mint treasury tokens', async function () {
-    const [owner] = await ethers.getSigners();
+describe('Mint Treasury', async () => {
+  const TREASURY_SIZE = 1000;
+  let kiftables, deployer, contrib1, contrib2, gnosisSafe;
 
-    const kiftables = await deployAllContracts();
-    await kiftables.deployed();
-    await kiftables.connect(owner).treasuryMint();
+  before(async () => {
+    [deployer, contrib1, contrib2, gnosisSafe] = await ethers.getSigners();
+    kiftables = await deployAllContracts();
+    await kiftables.connect(deployer).transferOwnership(gnosisSafe.address);
+  });
 
-    const maxTreasuryVans = 1000;
+  it('Shouldnt allow non-owner to mint', async () => {
+    await expect(kiftables.connect(deployer).treasuryMint()).to.be.revertedWith(
+      'Ownable: caller is not the owner'
+    );
+  });
 
-    let ownerBalance = await kiftables.balanceOf(owner.address);
-    console.log('Owner balance: ', ownerBalance);
-    expect(ownerBalance).to.equal(maxTreasuryVans);
+  it('Successfully mints treasury', async () => {
+    expect(await kiftables.treasuryMinted()).to.equal(false);
+    await kiftables.connect(gnosisSafe).treasuryMint();
+    expect(await kiftables.treasuryMinted()).to.equal(true);
+    expect(await kiftables.counter()).to.equal(TREASURY_SIZE);
+  });
+
+  it('Shouldnt allow treasury to be minted twice', async () => {
+    await expect(
+      kiftables.connect(gnosisSafe).treasuryMint()
+    ).to.be.revertedWith('Treasury can only be minted once');
   });
 });

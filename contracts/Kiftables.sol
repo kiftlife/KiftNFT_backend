@@ -55,7 +55,7 @@ contract Kiftables is
 
     // ============ EVENTS ============
 
-    event MintTreasury(address indexed to, uint256 amount);
+    event MintTreasury();
 
     // ============ ACCESS CONTROL/SANITY MODIFIERS ============
 
@@ -104,7 +104,7 @@ contract Kiftables is
                 root,
                 keccak256(abi.encodePacked(msg.sender))
             ),
-            "Address does not exist in list"
+            "Address not in list or incorrect proof"
         );
         _;
     }
@@ -136,10 +136,6 @@ contract Kiftables is
         return _currentIndex;
     }
 
-    // function revealCount() external view returns (uint256) {
-    //     return lastTokenRevealed;
-    // }
-
     function getSeedForBatch(uint256 batch) public view returns (uint256 seed) {
         return batchToSeed[batch];
     }
@@ -148,21 +144,14 @@ contract Kiftables is
 
     function treasuryMint() public onlyOwner {
         require(treasuryMinted == false, "Treasury can only be minted once");
-
         _safeMint(msg.sender, maxTreasuryKiftables);
-
         treasuryMinted = true;
-
-        emit MintTreasury(msg.sender, maxTreasuryKiftables);
+        emit MintTreasury();
     }
 
     // ============ Airdrop ============
 
-    // TODO does ERC721a implement transfer more efficiently now?
-    function airdrop(address _to, uint256[] memory _tokenIds)
-        public
-        onlyOwner
-    {
+    function airdrop(address _to, uint256[] memory _tokenIds) public onlyOwner {
         for (uint256 i = 0; i < _tokenIds.length; i++) {
             airdropCounts[_to]++;
             safeTransferFrom(msg.sender, _to, _tokenIds[i]);

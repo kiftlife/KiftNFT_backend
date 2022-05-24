@@ -1,5 +1,5 @@
 const { ethers } = require('hardhat');
-const { BASE_PREREVEAL_URL, CHAINLINK_KEY_HASH } = require('../config/config');
+const { BASE_PREREVEAL_URL, CHAINLINK_KEY_HASH } = require('../../config/config');
 
 const deployAllContracts = async () => {
 

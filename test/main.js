@@ -206,7 +206,7 @@ describe('Kiftables Run Through', async () => {
       kiftables
         .connect(public1)
         .mintCommunitySale(1, proof, { value: ethers.utils.parseEther('0.08') })
-    ).to.revertedWith('Address does not exist in list');
+    ).to.revertedWith('Address not in list or incorrect proof');
   });
 
   /**
