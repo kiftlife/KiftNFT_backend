@@ -27,24 +27,26 @@ contract Kiftables is
     VRFConsumerBaseV2,
     BatchReveal
 {
+    // TODO remove
     using Counters for Counters.Counter;
 
     string public baseURI;
     string public preRevealBaseURI;
 
-    uint256 public constant MAX_KIFTABLES_PER_WALLET = 1000; // set back to 5 after dev
+    uint256 public constant MAX_KIFTABLES_PER_WALLET = 8000; // set back to 5 after dev
     uint256 public constant maxKiftables = 10000; // set back to 10000 after dev
     uint256 public constant maxCommunitySaleKiftables = 7000; // set back to 7000 after dev
     uint256 public constant maxTreasuryKiftables = 1000; // set back to 1000 after dev
     bool public treasuryMinted = false;
 
-    uint256 public constant PUBLIC_SALE_PRICE = 0.1 ether;        // set back to 0.10 after dev
+    uint256 public constant PUBLIC_SALE_PRICE = 0.1 ether; // set back to 0.10 after dev
     bool public isPublicSaleActive = false;
 
-    uint256 public constant COMMUNITY_SALE_PRICE = 0.08 ether;    // set back to 0.08 after dev
+    uint256 public constant COMMUNITY_SALE_PRICE = 0.08 ether; // set back to 0.08 after dev
     bool public isCommunitySaleActive = false;
     bytes32 public communityListMerkleRoot;
     mapping(address => uint256) public communityMintCounts;
+    mapping(address => uint256) public airdropCounts;
 
     // Constants from https://docs.chain.link/docs/vrf-contracts/
     VRFCoordinatorV2Interface COORDINATOR;
@@ -53,7 +55,7 @@ contract Kiftables is
 
     // ============ EVENTS ============
 
-    event MintTreasury(address indexed to, uint256 amount);
+    event MintTreasury();
 
     // ============ ACCESS CONTROL/SANITY MODIFIERS ============
 
@@ -68,8 +70,12 @@ contract Kiftables is
     }
 
     modifier maxKiftablesPerWallet(uint256 numberOfTokens) {
+        uint256 numAirdropped = airdropCounts[msg.sender];
         require(
-            balanceOf(msg.sender) + numberOfTokens <= MAX_KIFTABLES_PER_WALLET,
+            balanceOf(msg.sender) -
+                numAirdropped +
+                numberOfTokens <=
+                MAX_KIFTABLES_PER_WALLET,
             "Max Kiftables to mint is five"
         );
         _;
@@ -98,7 +104,7 @@ contract Kiftables is
                 root,
                 keccak256(abi.encodePacked(msg.sender))
             ),
-            "Address does not exist in list"
+            "Address not in list or incorrect proof"
         );
         _;
     }
@@ -130,34 +136,24 @@ contract Kiftables is
         return _currentIndex;
     }
 
-    // function revealCount() external view returns (uint256) {
-    //     return lastTokenRevealed;
-    // }
-
-    // function getSeedForBatch(uint256 batch) public view returns (uint256 seed) {
-    //     return batchToSeed[batch];
-    // }
+    function getSeedForBatch(uint256 batch) public view returns (uint256 seed) {
+        return batchToSeed[batch];
+    }
 
     // ============ Treasury ============
 
     function treasuryMint() public onlyOwner {
         require(treasuryMinted == false, "Treasury can only be minted once");
-
         _safeMint(msg.sender, maxTreasuryKiftables);
-
         treasuryMinted = true;
-
-        emit MintTreasury(msg.sender, maxTreasuryKiftables);
+        emit MintTreasury();
     }
 
     // ============ Airdrop ============
 
-    // TODO does ERC721a implement transfer more efficiently now?
-    function bulkTransfer(address _to, uint256[] memory _tokenIds)
-        public
-        onlyOwner
-    {
+    function airdrop(address _to, uint256[] memory _tokenIds) public onlyOwner {
         for (uint256 i = 0; i < _tokenIds.length; i++) {
+            airdropCounts[_to]++;
             safeTransferFrom(msg.sender, _to, _tokenIds[i]);
         }
     }
@@ -176,7 +172,7 @@ contract Kiftables is
         _safeMint(msg.sender, numberOfTokens);
     }
 
-    // TODO could be put back to uint8 
+    // TODO could be put back to uint8
     function mintCommunitySale(
         uint256 numberOfTokens,
         bytes32[] calldata merkleProof

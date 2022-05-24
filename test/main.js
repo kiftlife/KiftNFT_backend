@@ -130,13 +130,9 @@ describe('Kiftables Run Through', async () => {
 
   it('Airdrop contributor tokens', async () => {
     let tokenIds = generateTokenIdArray(0, AIRDROP_CONTRIB_COUNT);
-    await kiftables
-      .connect(gnosisSafe)
-      .bulkTransfer(contrib1.address, tokenIds);
+    await kiftables.connect(gnosisSafe).airdrop(contrib1.address, tokenIds);
     tokenIds = generateTokenIdArray(5, AIRDROP_CONTRIB_COUNT);
-    await kiftables
-      .connect(gnosisSafe)
-      .bulkTransfer(contrib2.address, tokenIds);
+    await kiftables.connect(gnosisSafe).airdrop(contrib2.address, tokenIds);
 
     expect(await kiftables.balanceOf(contrib1.address)).to.equal(
       AIRDROP_CONTRIB_COUNT
@@ -210,11 +206,11 @@ describe('Kiftables Run Through', async () => {
       kiftables
         .connect(public1)
         .mintCommunitySale(1, proof, { value: ethers.utils.parseEther('0.08') })
-    ).to.revertedWith('Address does not exist in list');
+    ).to.revertedWith('Address not in list or incorrect proof');
   });
 
   /**
-   * If you're airdropped 5 tokens, you should still be able to mint up to 5
+   * If you're airdropped 5 tokens, you should still be able to mint up to 5 during community sale
    */
   it('Allow contributors to community mint after airdrop', async () => {
     const proof = allowListTree.getHexProof(allowListHash[0]);
@@ -249,6 +245,22 @@ describe('Kiftables Run Through', async () => {
     });
     expect(await kiftables.balanceOf(public1.address)).to.equal(mintCount);
   });
+
+    /**
+   * If you're airdropped 5 tokens, you should still be able to mint up to 5 during community sale
+   */
+     it('Allow contributors to public mint', async () => {
+       console.log('Contrib 1 balance: ', await kiftables.balanceOf(contrib1.address));
+       console.log('Contrib 2 balance: ', await kiftables.balanceOf(contrib2.address));
+      mintCount = 5;
+      amount = parseFloat((0.1 * mintCount).toString()).toFixed(2);
+      await kiftables.connect(contrib2).mint(mintCount, {
+        value: ethers.utils.parseEther(amount)
+      });
+      expect(await kiftables.balanceOf(contrib2.address)).to.equal(
+        mintCount + AIRDROP_CONTRIB_COUNT
+      );
+    });
 
   it('Dont allow public mint over max per wallet', async () => {
     mintCount = 5;
@@ -310,7 +322,7 @@ describe('Kiftables Run Through', async () => {
     await kiftables.connect(public2).mint(mintCount, eth);
     await kiftables.connect(public3).mint(mintCount, eth);
     await kiftables.connect(public4).mint(mintCount, eth);
-    mintCount = 995;
+    mintCount = 990;
     amount = parseFloat((0.1 * mintCount).toString()).toFixed(2);
     eth = { value: ethers.utils.parseEther(amount) };
     await kiftables.connect(contrib2).mint(mintCount, eth);
@@ -363,7 +375,7 @@ describe('Kiftables Run Through', async () => {
     let tokenIds = generateTokenIdArray(10, AIRDROP_CONTRIB_COUNT);
     await kiftables
       .connect(gnosisSafe)
-      .bulkTransfer(newContributor.address, tokenIds);
+      .airdrop(newContributor.address, tokenIds);
     expect(await kiftables.balanceOf(gnosisSafe.address)).to.equal(
       TREASURY_SIZE - 3 * AIRDROP_CONTRIB_COUNT
     );
@@ -372,16 +384,14 @@ describe('Kiftables Run Through', async () => {
   it('Cannot transfer the same token twice', async () => {
     let tokenIds = generateTokenIdArray(10, AIRDROP_CONTRIB_COUNT);
     await expect(
-      kiftables
-        .connect(gnosisSafe)
-        .bulkTransfer(newContributor.address, tokenIds)
+      kiftables.connect(gnosisSafe).airdrop(newContributor.address, tokenIds)
     ).to.revertedWithCustomError(kiftables, 'TransferFromIncorrectOwner');
   });
 
   it('Non-owner cannot transfer tokens', async () => {
     let tokenIds = generateTokenIdArray(15, AIRDROP_CONTRIB_COUNT);
     await expect(
-      kiftables.connect(owner).bulkTransfer(newContributor.address, tokenIds)
+      kiftables.connect(owner).airdrop(newContributor.address, tokenIds)
     ).to.be.revertedWith('Ownable: caller is not the owner');
   });
 });
