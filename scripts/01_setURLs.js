@@ -30,7 +30,7 @@ async function main() {
     blockHash,
     transactionHash
   });
-  const result = await kiftContract.getBaseURI();
+  const result = await kiftContract.baseURI();
   console.log('Base url set to: ', result);
 }
 

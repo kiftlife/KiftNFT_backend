@@ -24,16 +24,16 @@ contract Kiftables is
     string public baseURI;
     string public preRevealBaseURI;
 
-    uint256 public constant MAX_KIFTABLES_PER_WALLET = 8000; // set back to 5 after dev
-    uint256 public constant maxKiftables = 10000;
-    uint256 public constant maxCommunitySaleKiftables = 7000;
-    uint256 public constant maxTreasuryKiftables = 1000;
+    uint256 public constant MAX_KIFTABLES_PER_WALLET = 800; // set back to 5 after dev
+    uint256 public constant maxKiftables = 1000;
+    uint256 public constant maxCommunitySaleKiftables = 700;
+    uint256 public constant maxTreasuryKiftables = 100;
     bool public treasuryMinted = false;
 
-    uint256 public constant PUBLIC_SALE_PRICE = 0.10 ether;
+    uint256 public constant PUBLIC_SALE_PRICE = 0.0010 ether;
     bool public isPublicSaleActive = false;
 
-    uint256 public constant COMMUNITY_SALE_PRICE = 0.08 ether;
+    uint256 public constant COMMUNITY_SALE_PRICE = 0.0008 ether;
     bool public isCommunitySaleActive = false;
     bytes32 public communityListMerkleRoot;
     mapping(address => uint256) public communityMintCounts;
