@@ -7,7 +7,7 @@ const {
   IPFS_BASE_URL,
   CHAINLINK_KEY_HASH
 } = require('../config/config');
-const { asyncForEach, generateTokenIdArray } = require('./utilities');
+const { asyncForEach, generateTokenIdArray } = require('./helpers/utilities');
 
 const buf2hex = (x) => '0x' + x.toString('hex');
 

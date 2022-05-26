@@ -5,7 +5,7 @@ const {
   deployAllContracts,
   asyncForEach,
   generateTokenIdArray
-} = require('./utilities');
+} = require('./helpers/utilities');
 
 describe('BatchReveal', async () => {
   it('Should run', () => {
@@ -74,7 +74,7 @@ describe('BatchReveal', async () => {
     console.log('remaining batches');
     await asyncForEach(remainingBatches, async (batch) => {
       await kiftables.revealNextBatch();
-      let seed = await kiftables.getSeedForBatch(batch);
+      let seed = await kiftables.batchToSeed(batch);
       console.log(`Seed for batch ${batch}: ${seed}`);
       lastTokenRevealed = await kiftables.lastTokenRevealed();
       console.log(`Revealed up until: ${lastTokenRevealed}`);

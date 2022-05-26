@@ -5,7 +5,7 @@ const {
   deployAllContracts,
   asyncForEach,
   generateTokenIdArray
-} = require('./utilities');
+} = require('./helpers/utilities');
 
 const TOKEN_LIMIT = 10000;
 const BATCH_SIZE = 200;
@@ -52,7 +52,7 @@ describe('BatchReveal', async () => {
     const remainingBatches = generateTokenIdArray(0, TOKEN_LIMIT / BATCH_SIZE);
     await asyncForEach(remainingBatches, async (batch) => {
       await kiftables.revealNextBatch();
-      let seed = await kiftables.getSeedForBatch(batch);
+      let seed = await kiftables.batchToSeed(batch);
     });
 
     lastTokenRevealed = await kiftables.revealCount();

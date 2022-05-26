@@ -7,7 +7,7 @@ const {
   deployAllContracts,
   asyncForEach,
   generateTokenIdArray
-} = require('./utilities');
+} = require('./helpers/utilities');
 
 const buf2hex = (x) => '0x' + x.toString('hex');
 

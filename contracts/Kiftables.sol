@@ -3,20 +3,14 @@ pragma solidity ^0.8.2;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/interfaces/IERC2981.sol";
-
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
-
 import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
-
 import "erc721a/contracts/ERC721A.sol";
-
 import "./BatchReveal.sol";
 
 contract Kiftables is
@@ -27,22 +21,19 @@ contract Kiftables is
     VRFConsumerBaseV2,
     BatchReveal
 {
-    // TODO remove
-    using Counters for Counters.Counter;
-
     string public baseURI;
     string public preRevealBaseURI;
 
     uint256 public constant MAX_KIFTABLES_PER_WALLET = 8000; // set back to 5 after dev
-    uint256 public constant maxKiftables = 10000; // set back to 10000 after dev
-    uint256 public constant maxCommunitySaleKiftables = 7000; // set back to 7000 after dev
-    uint256 public constant maxTreasuryKiftables = 1000; // set back to 1000 after dev
+    uint256 public constant maxKiftables = 10000;
+    uint256 public constant maxCommunitySaleKiftables = 7000;
+    uint256 public constant maxTreasuryKiftables = 1000;
     bool public treasuryMinted = false;
 
-    uint256 public constant PUBLIC_SALE_PRICE = 0.1 ether; // set back to 0.10 after dev
+    uint256 public constant PUBLIC_SALE_PRICE = 0.10 ether;
     bool public isPublicSaleActive = false;
 
-    uint256 public constant COMMUNITY_SALE_PRICE = 0.08 ether; // set back to 0.08 after dev
+    uint256 public constant COMMUNITY_SALE_PRICE = 0.08 ether;
     bool public isCommunitySaleActive = false;
     bytes32 public communityListMerkleRoot;
     mapping(address => uint256) public communityMintCounts;
@@ -56,6 +47,8 @@ contract Kiftables is
     // ============ EVENTS ============
 
     event MintTreasury();
+    event Airdrop(address indexed to, uint256 amount);
+    event WithdrawBalance(address indexed from, uint256 amount);
 
     // ============ ACCESS CONTROL/SANITY MODIFIERS ============
 
@@ -72,9 +65,8 @@ contract Kiftables is
     modifier maxKiftablesPerWallet(uint256 numberOfTokens) {
         uint256 numAirdropped = airdropCounts[msg.sender];
         require(
-            balanceOf(msg.sender) -
-                numAirdropped +
-                numberOfTokens <=
+            numberOfTokens <= 5 &&
+                balanceOf(msg.sender) - numAirdropped + numberOfTokens <=
                 MAX_KIFTABLES_PER_WALLET,
             "Max Kiftables to mint is five"
         );
@@ -130,14 +122,6 @@ contract Kiftables is
     {
         bytes32 leaf = keccak256(abi.encodePacked(msg.sender));
         return MerkleProof.verify(proof, root, leaf);
-    }
-
-    function counter() public view returns (uint256) {
-        return _currentIndex;
-    }
-
-    function getSeedForBatch(uint256 batch) public view returns (uint256 seed) {
-        return batchToSeed[batch];
     }
 
     // ============ Treasury ============
@@ -204,22 +188,9 @@ contract Kiftables is
 
     // ============ PUBLIC READ-ONLY FUNCTIONS ============
 
-    // TODO these can all be deleted
-    // function getBaseURI() external view returns (string memory) {
-    //     return baseURI;
-    // }
-
-    // function communitySaleLive() external view returns (bool) {
-    //     return isCommunitySaleActive;
-    // }
-
-    // function publicSaleLive() external view returns (bool) {
-    //     return isPublicSaleActive;
-    // }
-
-    // function count() public view returns (uint256) {
-    //     return _totalMinted();
-    // }
+    function counter() public view returns (uint256) {
+        return _currentIndex;
+    }
 
     // ============ OWNER-ONLY ADMIN FUNCTIONS ============
 
@@ -262,11 +233,12 @@ contract Kiftables is
     }
 
     function withdraw() public payable onlyOwner {
-        // TODO add withdraw event
         (bool success, ) = payable(msg.sender).call{
             value: address(this).balance
         }("");
         require(success);
+
+        emit WithdrawBalance(msg.sender, address(this).balance);
     }
 
     // ============ CHAINLINK FUNCTIONS ============
