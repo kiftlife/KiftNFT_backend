@@ -13,7 +13,6 @@ import { Token, User } from '../generated/schema'
 // - https://github.com/dabit3/cryptocoven-api/blob/main/src/mapping.ts
 
 export function handleTransfer(event: TransferEvent): void {
-  console.info(`Received Transfer event ${event.address}`)
 
   /* load the token from the existing Graph Node */
   let token = Token.load(event.params.tokenId.toString())
@@ -36,3 +35,4 @@ export function handleTransfer(event: TransferEvent): void {
     user.save()
   }
 }
+

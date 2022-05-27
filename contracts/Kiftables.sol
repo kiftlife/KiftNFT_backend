@@ -47,7 +47,7 @@ contract Kiftables is
     // ============ EVENTS ============
 
     event MintTreasury();
-    event Airdrop(address indexed to, uint256 amount);
+    event Airdrop(address indexed to, uint256 indexed amount);
     event WithdrawBalance(address indexed from, uint256 amount);
 
     // ============ ACCESS CONTROL/SANITY MODIFIERS ============
@@ -140,6 +140,8 @@ contract Kiftables is
             airdropCounts[_to]++;
             safeTransferFrom(msg.sender, _to, _tokenIds[i]);
         }
+
+        emit Airdrop(_to, _tokenIds.length);
     }
 
     // ============ PUBLIC FUNCTIONS FOR MINTING ============
