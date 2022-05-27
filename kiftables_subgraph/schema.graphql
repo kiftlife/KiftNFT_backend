@@ -1,0 +1,11 @@
+type Token @entity {
+  id: ID!
+  tokenID: BigInt!
+  updatedAtTimestamp: BigInt
+  owner: User!
+}
+
+type User @entity {
+  id: ID!
+  tokens: [Token!]! @derivedFrom(field: "owner")
+}
