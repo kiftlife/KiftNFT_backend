@@ -19,13 +19,12 @@ export function handleTransfer(event: TransferEvent): void {
     /* if the token does not yet exist, create it */
     token = new Token(event.params.tokenId.toString())
     token.tokenID = event.params.tokenId
-
-    token.updatedAtTimestamp = event.block.timestamp
-
-    /* set or update the owner field and save the token to the Graph Node */
-    token.owner = event.params.to.toHexString()
-    token.save()
   }
+
+  token.updatedAtTimestamp = event.block.timestamp
+  /* set or update the owner field and save the token to the Graph Node */
+  token.owner = event.params.to.toHexString()
+  token.save()
   
   /* if the user does not yet exist, create them */
   let user = User.load(event.params.to.toHexString())
