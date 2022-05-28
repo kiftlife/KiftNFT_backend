@@ -4,8 +4,6 @@ import {
   Kiftables as KiftablesContract
 } from '../generated/Kiftables/Kiftables'
 import { Token, User } from '../generated/schema'
-// Import the generated contract class
-import { Kiftables } from '../generated/Kiftables/Kiftables'
 
 
 // TODO: create a new event handler for reveal which uses contract.tokenURI to get the newly
@@ -23,31 +21,30 @@ export function handleTransfer(event: TransferEvent): void {
     token.tokenID = event.params.tokenId
 
     // Get tokenURI from Kiftables contract
-    
-    let contract = Kiftables.bind(event.address)
+    let contract = KiftablesContract.bind(event.address)
     let tokenURI = contract.tokenURI(token.tokenID)
     log.debug('tokenURI', [tokenURI])
 
-    // tokenURI examples 
-    // [Pre-Reveal] ipfs://QmdwirNbpsi3aymwqEAtftMni5kmrqah44epkxJrAiU7aD
-    // [Reveal] ipfs://QmTrHZFPNpjYTgEdqu4FRjxW8Y5yCkrKeQZ1N2odQNyUwt/274.json
+    // // tokenURI examples 
+    // // [Pre-Reveal] ipfs://QmdwirNbpsi3aymwqEAtftMni5kmrqah44epkxJrAiU7aD
+    // // [Reveal] ipfs://QmTrHZFPNpjYTgEdqu4FRjxW8Y5yCkrKeQZ1N2odQNyUwt/274.json
 
-    let ipfsHash = tokenURI.replace('ipfs://', '');
+    let ipfsHash = tokenURI.replace('ipfs://', '')
     log.debug('ipfsHash', [ipfsHash])
 
     let ipfsData = ipfs.cat(ipfsHash)
-    log.debug('ipfsHash', [ipfsHash])
 
     if (ipfsData) {
       const value = json.fromBytes(ipfsData).toObject()
+
       if (value) {
         /* using the metatadata from IPFS, update the token object with the values  */
         const name = value.get('name')
         const description = value.get('description')
         const image = value.get('image')
-        const attributes = value.get('attributes')
+        // const attributes = value.get('attributes')
 
-        if (name && image && description && attributes) {
+        if (name && image && description) {
           token.name = name.toString()
           token.description = description.toString()
           token.image = image.toString()
@@ -55,6 +52,7 @@ export function handleTransfer(event: TransferEvent): void {
           // TODO: figure out how to store attributes
           // token.attributes = attributes
         }
+      }
     }
   }
 
