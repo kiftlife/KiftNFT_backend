@@ -52,24 +52,9 @@ export function handleTransfer(event: TransferEvent): void {
           token.description = description.toString()
           token.image = image.toString()
           token.ipfsURI = 'ipfs.io/ipfs/' + ipfsHash
+          // TODO: figure out how to store attributes
           // token.attributes = attributes
         }
-    }
-
-    // TODO: should we be searching by another approach? i.e. ipfs://{...}/1.json
-    // let metadata = ipfs.cat(ipfshash + token.tokenURI)
-    
-
-    // data example
-    // {
-    //   "name": "Unrevealed Kiftable",
-    //   "description": "Your Kiftable will be revealed soon!",
-    //   "image": "ipfs://QmNqtqiYJxUWzCyPaGZFe8GFWLkT9FcZhQvN1cjM7MPFp1",
-    //   "attributes": []
-    // }
-    // log.debug('ipfs data', [ipfsData?.toString()])
-    if (ipfsData) {
-
     }
   }
 
