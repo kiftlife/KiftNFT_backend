@@ -1,9 +1,10 @@
-import { ipfs, json, log } from '@graphprotocol/graph-ts'
+import { BigInt, ethereum, ipfs, json, log } from '@graphprotocol/graph-ts'
 import {
   Transfer as TransferEvent,
-  Kiftables as KiftablesContract
+  Kiftables as KiftablesContract,
+  LogReveal as RevealEvent,
 } from '../generated/Kiftables/Kiftables'
-import { Token, User } from '../generated/schema'
+import { Attribute, Token, User } from '../generated/schema'
 
 
 // TODO: create a new event handler for reveal which uses contract.tokenURI to get the newly
@@ -19,20 +20,22 @@ export function handleTransfer(event: TransferEvent): void {
     /* if the token does not yet exist, create it */
     token = new Token(event.params.tokenId.toString())
     token.tokenID = event.params.tokenId
+    token.revealed = false
 
     // Get tokenURI from Kiftables contract
     let contract = KiftablesContract.bind(event.address)
     let tokenURI = contract.tokenURI(token.tokenID)
-    log.debug('tokenURI', [tokenURI])
 
-    // // tokenURI examples 
-    // // [Pre-Reveal] ipfs://QmdwirNbpsi3aymwqEAtftMni5kmrqah44epkxJrAiU7aD
-    // // [Reveal] ipfs://QmTrHZFPNpjYTgEdqu4FRjxW8Y5yCkrKeQZ1N2odQNyUwt/274.json
+    // tokenURI examples 
+    // [Pre-Reveal] ipfs://QmdwirNbpsi3aymwqEAtftMni5kmrqah44epkxJrAiU7aD
+    // [Reveal] ipfs://QmTrHZFPNpjYTgEdqu4FRjxW8Y5yCkrKeQZ1N2odQNyUwt/274.json
 
     let ipfsHash = tokenURI.replace('ipfs://', '')
-    log.debug('ipfsHash', [ipfsHash])
-
     let ipfsData = ipfs.cat(ipfsHash)
+
+    if (!ipfsData) {
+      log.error(`[KIFT] No ipfs data found for tokenId: ${token.tokenID.toString()}. tokenURI: ${tokenURI}`, []);
+    }
 
     if (ipfsData) {
       const value = json.fromBytes(ipfsData).toObject()
@@ -42,16 +45,18 @@ export function handleTransfer(event: TransferEvent): void {
         const name = value.get('name')
         const description = value.get('description')
         const image = value.get('image')
-        // const attributes = value.get('attributes')
 
         if (name && image && description) {
           token.name = name.toString()
           token.description = description.toString()
           token.image = image.toString()
+          token.tokenURI = tokenURI.toString()
           token.ipfsURI = 'ipfs.io/ipfs/' + ipfsHash
-          // TODO: figure out how to store attributes
-          // token.attributes = attributes
         }
+
+
+        // TODO: handle attrbutes. I think initial transfer attributes will always be empty since not revealed right???
+        token.attributes = []        
       }
     }
   }
@@ -69,3 +74,89 @@ export function handleTransfer(event: TransferEvent): void {
   }
 }
 
+export function handleReveal(event: RevealEvent): void {
+  let lastTokenRevealed = event.params.lastTokenRevealed.toString()
+  log.info(`[KIFT] token reveal event ${lastTokenRevealed}`, [])
+
+  const revealFinish = event.params.lastTokenRevealed
+  const revealStart = revealFinish.minus(BigInt.fromI32(200));
+  log.info(`[KIFT] token reveal start: ${revealStart.toString()} | finish: ${revealFinish.toString()}`, [])
+
+  for (let i = revealStart; i.lt(revealFinish); i.plus(BigInt.fromI32(1))) {
+    const tokenId = i.toString().split('.')[0]
+    let token = Token.load(i.toString())
+    log.info(`[KIFT] fetch tokenId ${tokenId} | token found: ${!!token}`, [])
+    
+    if (token) {
+      // ****** get new IPFS data now that revealed ******
+      // Get tokenURI from Kiftables contract
+      let contract = KiftablesContract.bind(event.address)
+      let tokenURI = contract.tokenURI(token.tokenID)
+
+      // tokenURI examples 
+      // [Pre-Reveal] ipfs://QmdwirNbpsi3aymwqEAtftMni5kmrqah44epkxJrAiU7aD
+      // [Reveal] ipfs://QmTrHZFPNpjYTgEdqu4FRjxW8Y5yCkrKeQZ1N2odQNyUwt/274.json
+
+      let ipfsHash = tokenURI.replace('ipfs://', '')
+      let ipfsData = ipfs.cat(ipfsHash)
+
+      if (!ipfsData) {
+        log.error(`[KIFT] No ipfs data found for tokenId: ${token.tokenID.toString()}. tokenURI: ${tokenURI}`, []);
+      }
+
+      // const tokenAttributes: Attribute[] = []
+      const tokenAttributes: string[] = []
+
+      // if (ipfsData) {
+      //   const value = json.fromBytes(ipfsData).toObject()
+
+      //   /* using the metatadata from IPFS, update the token object with the values  */
+      //   const name = value.get('name')
+      //   const description = value.get('description')
+      //   const image = value.get('image')
+
+      //   if (name && image && description) {
+      //     token.name = name.toString()
+      //     token.description = description.toString()
+      //     token.image = image.toString()
+      //     token.tokenURI = tokenURI.toString()
+      //     token.ipfsURI = 'ipfs.io/ipfs/' + ipfsHash
+      //   }
+
+        
+      //   const attributes = value.get('attributes')
+
+      //   if (attributes) {
+      //     attributes.toArray().forEach(attributeJson => {
+      //       const attributeObj = attributeJson.toObject()
+            
+      //       let attributeId = attributeObj.get('id')
+      //       let type = attributeObj.get('trait_type')
+      //       let value = attributeObj.get('value')
+      //       let attribute
+
+      //       if (attributeId) {
+      //         attribute = Attribute.load(attributeId.toString())
+      //       }
+              
+      //       // Create new attribute if not found
+      //       if (!attribute && type && value) {
+      //         attribute = new Attribute(type.toString())
+      //         attribute.trait_type = type.toString()
+      //         attribute.value = value.toString()
+      //         attribute.save()
+      //       }
+
+      //       if (attribute) {
+      //         tokenAttributes.push(attribute.id.toString())
+      //       }
+      //     });
+      //   }
+      // }
+
+      token.attributes = tokenAttributes
+      token.revealed = true
+      token.save()
+    }
+  }
+}

@@ -19,14 +19,15 @@ dataSources:
       entities:
         - Token
         - User
+        - Attribute
       abis:
         - name: Kiftables
           file: ../src/artifacts/contracts/Kiftables.sol/Kiftables.json
       eventHandlers:
         - event: Transfer(indexed address,indexed address,indexed uint256)
           handler: handleTransfer
-        # - event: Reveal(indexed uint256)    // lastTokenRevealed
-        #   handler: handleReveal
+        - event: LogReveal(indexed uint256)
+          handler: handleReveal
         # - event: MintTreasury()
         #   handler: handleMintTreasury
         # - event: Airdrop(indexed address, indexed uint256)    // recipient, numberOfTokens

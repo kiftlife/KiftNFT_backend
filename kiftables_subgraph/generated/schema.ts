@@ -11,6 +11,56 @@ import {
   BigDecimal
 } from "@graphprotocol/graph-ts";
 
+export class Attribute extends Entity {
+  constructor(id: string) {
+    super();
+    this.set("id", Value.fromString(id));
+  }
+
+  save(): void {
+    let id = this.get("id");
+    assert(id != null, "Cannot save Attribute entity without an ID");
+    if (id) {
+      assert(
+        id.kind == ValueKind.STRING,
+        `Entities of type Attribute must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
+      );
+      store.set("Attribute", id.toString(), this);
+    }
+  }
+
+  static load(id: string): Attribute | null {
+    return changetype<Attribute | null>(store.get("Attribute", id));
+  }
+
+  get id(): string {
+    let value = this.get("id");
+    return value!.toString();
+  }
+
+  set id(value: string) {
+    this.set("id", Value.fromString(value));
+  }
+
+  get trait_type(): string {
+    let value = this.get("trait_type");
+    return value!.toString();
+  }
+
+  set trait_type(value: string) {
+    this.set("trait_type", Value.fromString(value));
+  }
+
+  get value(): string {
+    let value = this.get("value");
+    return value!.toString();
+  }
+
+  set value(value: string) {
+    this.set("value", Value.fromString(value));
+  }
+}
+
 export class Token extends Entity {
   constructor(id: string) {
     super();
@@ -128,6 +178,23 @@ export class Token extends Entity {
     }
   }
 
+  get tokenURI(): string | null {
+    let value = this.get("tokenURI");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toString();
+    }
+  }
+
+  set tokenURI(value: string | null) {
+    if (!value) {
+      this.unset("tokenURI");
+    } else {
+      this.set("tokenURI", Value.fromString(<string>value));
+    }
+  }
+
   get ipfsURI(): string | null {
     let value = this.get("ipfsURI");
     if (!value || value.kind == ValueKind.NULL) {
@@ -143,6 +210,24 @@ export class Token extends Entity {
     } else {
       this.set("ipfsURI", Value.fromString(<string>value));
     }
+  }
+
+  get attributes(): Array<string> {
+    let value = this.get("attributes");
+    return value!.toStringArray();
+  }
+
+  set attributes(value: Array<string>) {
+    this.set("attributes", Value.fromStringArray(value));
+  }
+
+  get revealed(): boolean {
+    let value = this.get("revealed");
+    return value!.toBoolean();
+  }
+
+  set revealed(value: boolean) {
+    this.set("revealed", Value.fromBoolean(value));
   }
 }
 

@@ -1,3 +1,9 @@
+type Attribute @entity {
+  id: ID!
+  trait_type: String!
+  value: String!
+}
+
 type Token @entity {
   id: ID!
   tokenID: BigInt!
@@ -6,7 +12,10 @@ type Token @entity {
   name: String
   description: String
   image: String
+  tokenURI: String
   ipfsURI: String
+  attributes: [Attribute!]!
+  revealed: Boolean!
 }
 
 type User @entity {
