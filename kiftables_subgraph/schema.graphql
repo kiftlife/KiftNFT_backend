@@ -1,8 +1,18 @@
+# type Attribute {
+#   trait_type: String!
+#   value: String!
+# }
+
 type Token @entity {
   id: ID!
   tokenID: BigInt!
   updatedAtTimestamp: BigInt
   owner: User!
+  name: String
+  description: String
+  image: String
+  ipfsURI: String
+  # attributes: [Attribute!]
 }
 
 type User @entity {
