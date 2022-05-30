@@ -87,7 +87,6 @@ export function handleReveal(event: RevealEvent): void {
   for (let i = revealStart; i < revealFinish; i++) {
     let tokenId = i.toString()
     let token = Token.load(tokenId)
-    // TODO: I'm not sure why, but i seems to be 0 for all of these
     log.info(`[KIFT:handleReveal] fetch tokenId ${tokenId} | token found: ${!!token}`, [])
     
     if (token) {
@@ -126,7 +125,6 @@ export function handleReveal(event: RevealEvent): void {
         const attributes = value.get('attributes')
 
         if (attributes) {
-          // attributes.toArray().forEach(attributeJson => {
           const attributesArray = attributes.toArray()
           for (let i = 0; i < attributesArray.length; i++) {
             const attributeJson = attributesArray[i]
