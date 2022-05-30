@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: MIT
+//SPDX-License-Identifier: CC0
 pragma solidity ^0.8.2;
 
 import "@openzeppelin/contracts/utils/Strings.sol";
 
+// Forked from tubby-cats
 abstract contract BatchReveal {
     uint256 public constant TOKEN_LIMIT = 10000;
     uint256 public constant REVEAL_BATCH_SIZE = 200;
@@ -28,7 +29,6 @@ abstract contract BatchReveal {
     int128 constant intTOKEN_LIMIT = int128(int256(TOKEN_LIMIT));
 
     // ranges include the start but not the end [start, end)
-    // TODO remove view and set back to pure after testing
     function addRange(
         Range[RANGE_LENGTH] memory ranges,
         int128 start,
@@ -66,8 +66,8 @@ abstract contract BatchReveal {
     }
 
     function buildJumps(uint256 lastBatch)
-        private
         view
+        private
         returns (Range[RANGE_LENGTH] memory)
     {
         Range[RANGE_LENGTH] memory ranges;
@@ -83,8 +83,7 @@ abstract contract BatchReveal {
         return ranges;
     }
 
-    // set back to internal from public when out of dev
-    function getShuffledTokenId(uint256 startId) public view returns (uint256) {
+    function getShuffledTokenId(uint256 startId) view internal returns (uint256) {
         uint256 batch = startId / REVEAL_BATCH_SIZE;
         Range[RANGE_LENGTH] memory ranges = buildJumps(batch);
         uint256 positionsToMove = (startId % REVEAL_BATCH_SIZE) +
@@ -95,7 +94,7 @@ abstract contract BatchReveal {
     function getFreeTokenId(
         uint256 positionsToMoveStart,
         Range[RANGE_LENGTH] memory ranges
-    ) private pure returns (uint256) {
+    ) pure private returns (uint256) {
         int128 positionsToMove = int128(int256(positionsToMoveStart));
         int128 id = 0;
         for (uint256 round = 0; round < 2; round++) {

@@ -27,8 +27,6 @@ contract Kiftables is
     VRFConsumerBaseV2,
     BatchReveal
 {
-    // TODO remove
-    using Counters for Counters.Counter;
 
     string public baseURI;
     string public preRevealBaseURI;
