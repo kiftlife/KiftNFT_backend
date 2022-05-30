@@ -247,8 +247,9 @@ contract Kiftables is
 
     // ============ CHAINLINK FUNCTIONS ============
 
+    // TODO leave as onlyOwner or set back to public?
     // batchNumber belongs to [0, TOKEN_LIMIT/REVEAL_BATCH_SIZE]
-    function revealNextBatch() public {
+    function revealNextBatch() public onlyOwner {
         require(
             maxKiftables >= (lastTokenRevealed + REVEAL_BATCH_SIZE),
             "maxKiftables too low"
