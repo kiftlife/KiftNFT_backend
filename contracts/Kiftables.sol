@@ -21,19 +21,21 @@ contract Kiftables is
     VRFConsumerBaseV2,
     BatchReveal
 {
+
+
     string public baseURI;
     string public preRevealBaseURI;
 
-    uint256 public constant MAX_KIFTABLES_PER_WALLET = 800; // set back to 5 after dev
-    uint256 public constant maxKiftables = 1000;
-    uint256 public constant maxCommunitySaleKiftables = 700;
-    uint256 public constant maxTreasuryKiftables = 100;
+    uint256 public constant MAX_KIFTABLES_PER_WALLET = 5; 
+    uint256 public constant maxKiftables = 10000;
+    uint256 public constant maxCommunitySaleKiftables = 7000;
+    uint256 public constant maxTreasuryKiftables = 1000; 
     bool public treasuryMinted = false;
 
-    uint256 public constant PUBLIC_SALE_PRICE = 0.0010 ether;
+    uint256 public constant PUBLIC_SALE_PRICE = 0.1 ether; 
     bool public isPublicSaleActive = false;
 
-    uint256 public constant COMMUNITY_SALE_PRICE = 0.0008 ether;
+    uint256 public constant COMMUNITY_SALE_PRICE = 0.08 ether;
     bool public isCommunitySaleActive = false;
     bytes32 public communityListMerkleRoot;
     mapping(address => uint256) public communityMintCounts;
@@ -245,8 +247,9 @@ contract Kiftables is
 
     // ============ CHAINLINK FUNCTIONS ============
 
+    // TODO leave as onlyOwner or set back to public?
     // batchNumber belongs to [0, TOKEN_LIMIT/REVEAL_BATCH_SIZE]
-    function revealNextBatch() public {
+    function revealNextBatch() public onlyOwner {
         require(
             maxKiftables >= (lastTokenRevealed + REVEAL_BATCH_SIZE),
             "maxKiftables too low"
