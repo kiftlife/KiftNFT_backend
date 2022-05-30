@@ -1,4 +1,4 @@
-import { BigInt, ethereum, ipfs, json, log } from '@graphprotocol/graph-ts'
+import { BigInt, ipfs, json, log } from '@graphprotocol/graph-ts'
 import {
   Transfer as TransferEvent,
   Kiftables as KiftablesContract,
@@ -76,21 +76,23 @@ export function handleTransfer(event: TransferEvent): void {
 
 export function handleReveal(event: RevealEvent): void {
   let lastTokenRevealed = event.params.lastTokenRevealed.toString()
-  log.info(`[KIFT] token reveal event ${lastTokenRevealed}`, [])
+  let contract = KiftablesContract.bind(event.address)
 
-  const revealFinish = event.params.lastTokenRevealed
-  const revealStart = revealFinish.minus(BigInt.fromI32(200));
-  log.info(`[KIFT] token reveal start: ${revealStart.toString()} | finish: ${revealFinish.toString()}`, [])
-
-  for (let i = revealStart; i.lt(revealFinish); i.plus(BigInt.fromI32(1))) {
-    const tokenId = i.toString().split('.')[0]
-    let token = Token.load(i.toString())
-    log.info(`[KIFT] fetch tokenId ${tokenId} | token found: ${!!token}`, [])
+  const revealFinish = event.params.lastTokenRevealed.toI32()
+  const revealStart = revealFinish - 200;
+  
+  log.info(`[KIFT:handleReveal] token reveal start: ${revealStart.toString()} | finish: ${revealFinish.toString()}`, [])
+    
+  let tokenAttributes: string[] = []
+  for (let i = revealStart; i < revealFinish; i++) {
+    let tokenId = i.toString()
+    let token = Token.load(tokenId)
+    // TODO: I'm not sure why, but i seems to be 0 for all of these
+    log.info(`[KIFT:handleReveal] fetch tokenId ${tokenId} | token found: ${!!token}`, [])
     
     if (token) {
       // ****** get new IPFS data now that revealed ******
       // Get tokenURI from Kiftables contract
-      let contract = KiftablesContract.bind(event.address)
       let tokenURI = contract.tokenURI(token.tokenID)
 
       // tokenURI examples 
@@ -99,60 +101,62 @@ export function handleReveal(event: RevealEvent): void {
 
       let ipfsHash = tokenURI.replace('ipfs://', '')
       let ipfsData = ipfs.cat(ipfsHash)
-
+      
       if (!ipfsData) {
-        log.error(`[KIFT] No ipfs data found for tokenId: ${token.tokenID.toString()}. tokenURI: ${tokenURI}`, []);
+        log.error(`[KIFT:handleReveal] No ipfs data found for tokenId: ${token.tokenID.toString()}. tokenURI: ${tokenURI}`, []);
       }
 
-      // const tokenAttributes: Attribute[] = []
-      const tokenAttributes: string[] = []
+      if (ipfsData) {
+        const value = json.fromBytes(ipfsData).toObject()
 
-      // if (ipfsData) {
-      //   const value = json.fromBytes(ipfsData).toObject()
+        /* using the metatadata from IPFS, update the token object with the values  */
+        const name = value.get('name')
+        const description = value.get('description')
+        const image = value.get('image')
 
-      //   /* using the metatadata from IPFS, update the token object with the values  */
-      //   const name = value.get('name')
-      //   const description = value.get('description')
-      //   const image = value.get('image')
-
-      //   if (name && image && description) {
-      //     token.name = name.toString()
-      //     token.description = description.toString()
-      //     token.image = image.toString()
-      //     token.tokenURI = tokenURI.toString()
-      //     token.ipfsURI = 'ipfs.io/ipfs/' + ipfsHash
-      //   }
+        if (name && image && description) {
+          token.name = name.toString()
+          token.description = description.toString()
+          token.image = image.toString()
+          token.tokenURI = tokenURI.toString()
+          token.ipfsURI = 'ipfs.io/ipfs/' + ipfsHash
+        }
 
         
-      //   const attributes = value.get('attributes')
+        const attributes = value.get('attributes')
 
-      //   if (attributes) {
-      //     attributes.toArray().forEach(attributeJson => {
-      //       const attributeObj = attributeJson.toObject()
+        if (attributes) {
+          // attributes.toArray().forEach(attributeJson => {
+          const attributesArray = attributes.toArray()
+          for (let i = 0; i < attributesArray.length; i++) {
+            const attributeJson = attributesArray[i]
+            const attributeObj = attributeJson.toObject()
             
-      //       let attributeId = attributeObj.get('id')
-      //       let type = attributeObj.get('trait_type')
-      //       let value = attributeObj.get('value')
-      //       let attribute
+            let type = attributeObj.get('trait_type')
+            let value = attributeObj.get('value')
+            
+            if (type && value) {
+              // for now using trait type & value for generating attribute id
+              let attributeId = type.toString() + '-' + value.toString()
+              let attribute = Attribute.load(attributeId)
 
-      //       if (attributeId) {
-      //         attribute = Attribute.load(attributeId.toString())
-      //       }
-              
-      //       // Create new attribute if not found
-      //       if (!attribute && type && value) {
-      //         attribute = new Attribute(type.toString())
-      //         attribute.trait_type = type.toString()
-      //         attribute.value = value.toString()
-      //         attribute.save()
-      //       }
+              // Create new attribute if not found
+              if (!attribute && type && value) {
+                attribute = new Attribute(attributeId)
+                attribute.trait_type = type.toString()
+                attribute.value = value.toString()
+                
+                log.info(`[KIFT:handleReveal] new attribute created ${attributeId}`, [])
+                attribute.save() 
+              }
 
-      //       if (attribute) {
-      //         tokenAttributes.push(attribute.id.toString())
-      //       }
-      //     });
-      //   }
-      // }
+              if (attribute) {
+                tokenAttributes.push(attributeId)
+              }
+            }
+          }
+        }
+      }
 
       token.attributes = tokenAttributes
       token.revealed = true
