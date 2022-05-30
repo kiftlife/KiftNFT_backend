@@ -21,8 +21,6 @@ contract Kiftables is
     VRFConsumerBaseV2,
     BatchReveal
 {
-
-
     string public baseURI;
     string public preRevealBaseURI;
 
@@ -50,7 +48,6 @@ contract Kiftables is
 
     event MintTreasury();
     event Airdrop(address indexed to, uint256 indexed amount);
-    event WithdrawBalance(address indexed from, uint256 amount);
 
     // ============ ACCESS CONTROL/SANITY MODIFIERS ============
 
@@ -241,8 +238,6 @@ contract Kiftables is
             value: address(this).balance
         }("");
         require(success);
-
-        emit WithdrawBalance(msg.sender, address(this).balance);
     }
 
     // ============ CHAINLINK FUNCTIONS ============
@@ -259,7 +254,7 @@ contract Kiftables is
             s_keyHash,
             s_subscriptionId,
             3, // requestConfirmations
-            100000, // callbackGasLimit         // set back to 100000
+            100000, // callbackGasLimit         
             1 // numWords
         );
     }
