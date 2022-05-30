@@ -28,4 +28,10 @@ https://thegraph.com/hosted-service/subgraph/bradryan/kiftables
 
 5. Deploy changes to the graph
 
+`graph deploy --product hosted-service <GITHUB_USER>/<SUBGRAPH_NAME>`
+
+Example:
 `graph deploy --product hosted-service bradryan/kiftables`
+
+** DISCLAIMER **
+If a new contract has been deployed, currently you need to new subgraph.

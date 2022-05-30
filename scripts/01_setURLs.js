@@ -20,7 +20,7 @@ async function main() {
 
   const tx0 = await kiftContract.setPreRevealUri(BASE_PREREVEAL_URL);
   const receipt0 = await tx0.wait();
-  console.log(`Update preveal url: ${receipt0.transactionHash}`);
+  console.log(`Update preveal url: `, await kiftContract.preRevealBaseURI());
   
   const tx1 = await kiftContract.setBaseURI(IPFS_BASE_URL);
   const receipt1 = await tx1.wait();
@@ -30,7 +30,7 @@ async function main() {
     blockHash,
     transactionHash
   });
-  const result = await kiftContract.getBaseURI();
+  const result = await kiftContract.baseURI();
   console.log('Base url set to: ', result);
 }
 

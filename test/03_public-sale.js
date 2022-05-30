@@ -1,6 +1,6 @@
 const { expect } = require('chai');
 const { ethers } = require('hardhat');
-const { deployAllContracts } = require('./utilities');
+const { deployAllContracts } = require('./helpers/utilities');
 
 const MINT_COUNT = 3
 

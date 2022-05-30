@@ -1,5 +1,5 @@
 
-const BASE_PREREVEAL_URL = `ipfs://QmYcdk2XeDwuD9UgVzviBtjR2Ru4TmnQR5zcrs2ftaEvpV`
+const BASE_PREREVEAL_URL = `ipfs://QmdwirNbpsi3aymwqEAtftMni5kmrqah44epkxJrAiU7aD`
 const IPFS_BASE_URL = `ipfs://QmTrHZFPNpjYTgEdqu4FRjxW8Y5yCkrKeQZ1N2odQNyUwt`
 
 // const BASE_PREREVEAL_URL = 'ipfs://a-placeholder-image-path';

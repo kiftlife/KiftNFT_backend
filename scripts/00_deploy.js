@@ -18,16 +18,6 @@ async function main() {
 
   console.log('Kiftables NFT Contract deployed to:', kiftables.address);
 
-  // TODO this doesnt work
-  // await hre.run('verify:verify', {
-  //   address: kiftables.address,
-  //   constructorArguments: [
-  //     BASE_PREREVEAL_URL,
-  //     s_keyHash,
-  //     vrfCoordinator,
-  //     subscriptionId
-  //   ]
-  // });
 }
 
 main()

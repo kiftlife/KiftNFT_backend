@@ -1,14 +1,17 @@
 specVersion: 0.0.5
 schema:
   file: ./schema.graphql
+features:
+  - fullTextSearch
+  - ipfsOnEthereumContracts
 dataSources:
   - kind: ethereum
     name: Kiftables
     network: rinkeby
     source:
-      address: "0xbEfaC2655AA988d0DC866Bb100A3512760856F47"
+      address: "0x7d099277525C7e4B14d566fdf8a121529FBe4387"
       abi: Kiftables
-      startBlock: 10715641
+      startBlock: 10747403
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.5
@@ -16,12 +19,17 @@ dataSources:
       entities:
         - Token
         - User
+        - Attribute
       abis:
         - name: Kiftables
-          file: ./abis/Kiftables.json
+          file: ../src/artifacts/contracts/Kiftables.sol/Kiftables.json
       eventHandlers:
         - event: Transfer(indexed address,indexed address,indexed uint256)
           handler: handleTransfer
-        # - event: Reveal(indexed address,indexed address,indexed uint256)
-        #   handler: handleReveal
+        - event: LogReveal(indexed uint256)
+          handler: handleReveal
+        # - event: MintTreasury()
+        #   handler: handleMintTreasury
+        # - event: Airdrop(indexed address, indexed uint256)    // recipient, numberOfTokens
+        #   handler: handleAirdrop
       file: ./src/mapping.ts

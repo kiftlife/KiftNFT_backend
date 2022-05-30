@@ -3,20 +3,14 @@ pragma solidity ^0.8.2;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/interfaces/IERC2981.sol";
-
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
-
 import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
-
 import "erc721a/contracts/ERC721A.sol";
-
 import "./BatchReveal.sol";
 
 contract Kiftables is
@@ -27,6 +21,7 @@ contract Kiftables is
     VRFConsumerBaseV2,
     BatchReveal
 {
+
 
     string public baseURI;
     string public preRevealBaseURI;
@@ -54,6 +49,8 @@ contract Kiftables is
     // ============ EVENTS ============
 
     event MintTreasury();
+    event Airdrop(address indexed to, uint256 indexed amount);
+    event WithdrawBalance(address indexed from, uint256 amount);
 
     // ============ ACCESS CONTROL/SANITY MODIFIERS ============
 
@@ -70,9 +67,8 @@ contract Kiftables is
     modifier maxKiftablesPerWallet(uint256 numberOfTokens) {
         uint256 numAirdropped = airdropCounts[msg.sender];
         require(
-            balanceOf(msg.sender) -
-                numAirdropped +
-                numberOfTokens <=
+            numberOfTokens <= 5 &&
+                balanceOf(msg.sender) - numAirdropped + numberOfTokens <=
                 MAX_KIFTABLES_PER_WALLET,
             "Max Kiftables to mint is five"
         );
@@ -130,14 +126,6 @@ contract Kiftables is
         return MerkleProof.verify(proof, root, leaf);
     }
 
-    function counter() public view returns (uint256) {
-        return _currentIndex;
-    }
-
-    function getSeedForBatch(uint256 batch) public view returns (uint256 seed) {
-        return batchToSeed[batch];
-    }
-
     // ============ Treasury ============
 
     function treasuryMint() public onlyOwner {
@@ -154,6 +142,8 @@ contract Kiftables is
             airdropCounts[_to]++;
             safeTransferFrom(msg.sender, _to, _tokenIds[i]);
         }
+
+        emit Airdrop(_to, _tokenIds.length);
     }
 
     // ============ PUBLIC FUNCTIONS FOR MINTING ============
@@ -202,22 +192,9 @@ contract Kiftables is
 
     // ============ PUBLIC READ-ONLY FUNCTIONS ============
 
-    // TODO these can all be deleted
-    // function getBaseURI() external view returns (string memory) {
-    //     return baseURI;
-    // }
-
-    // function communitySaleLive() external view returns (bool) {
-    //     return isCommunitySaleActive;
-    // }
-
-    // function publicSaleLive() external view returns (bool) {
-    //     return isPublicSaleActive;
-    // }
-
-    // function count() public view returns (uint256) {
-    //     return _totalMinted();
-    // }
+    function counter() public view returns (uint256) {
+        return _currentIndex;
+    }
 
     // ============ OWNER-ONLY ADMIN FUNCTIONS ============
 
@@ -260,11 +237,12 @@ contract Kiftables is
     }
 
     function withdraw() public payable onlyOwner {
-        // TODO add withdraw event
         (bool success, ) = payable(msg.sender).call{
             value: address(this).balance
         }("");
         require(success);
+
+        emit WithdrawBalance(msg.sender, address(this).balance);
     }
 
     // ============ CHAINLINK FUNCTIONS ============

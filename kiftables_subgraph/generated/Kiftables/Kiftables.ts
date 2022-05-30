@@ -10,6 +10,28 @@ import {
   BigInt
 } from "@graphprotocol/graph-ts";
 
+export class Airdrop extends ethereum.Event {
+  get params(): Airdrop__Params {
+    return new Airdrop__Params(this);
+  }
+}
+
+export class Airdrop__Params {
+  _event: Airdrop;
+
+  constructor(event: Airdrop) {
+    this._event = event;
+  }
+
+  get to(): Address {
+    return this._event.parameters[0].value.toAddress();
+  }
+
+  get amount(): BigInt {
+    return this._event.parameters[1].value.toBigInt();
+  }
+}
+
 export class Approval extends ethereum.Event {
   get params(): Approval__Params {
     return new Approval__Params(this);
@@ -62,6 +84,38 @@ export class ApprovalForAll__Params {
   }
 }
 
+export class LogReveal extends ethereum.Event {
+  get params(): LogReveal__Params {
+    return new LogReveal__Params(this);
+  }
+}
+
+export class LogReveal__Params {
+  _event: LogReveal;
+
+  constructor(event: LogReveal) {
+    this._event = event;
+  }
+
+  get lastTokenRevealed(): BigInt {
+    return this._event.parameters[0].value.toBigInt();
+  }
+}
+
+export class MintTreasury extends ethereum.Event {
+  get params(): MintTreasury__Params {
+    return new MintTreasury__Params(this);
+  }
+}
+
+export class MintTreasury__Params {
+  _event: MintTreasury;
+
+  constructor(event: MintTreasury) {
+    this._event = event;
+  }
+}
+
 export class OwnershipTransferred extends ethereum.Event {
   get params(): OwnershipTransferred__Params {
     return new OwnershipTransferred__Params(this);
@@ -107,6 +161,28 @@ export class Transfer__Params {
 
   get tokenId(): BigInt {
     return this._event.parameters[2].value.toBigInt();
+  }
+}
+
+export class WithdrawBalance extends ethereum.Event {
+  get params(): WithdrawBalance__Params {
+    return new WithdrawBalance__Params(this);
+  }
+}
+
+export class WithdrawBalance__Params {
+  _event: WithdrawBalance;
+
+  constructor(event: WithdrawBalance) {
+    this._event = event;
+  }
+
+  get from(): Address {
+    return this._event.parameters[0].value.toAddress();
+  }
+
+  get amount(): BigInt {
+    return this._event.parameters[1].value.toBigInt();
   }
 }
 
@@ -239,6 +315,29 @@ export class Kiftables extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
+  airdropCounts(param0: Address): BigInt {
+    let result = super.call(
+      "airdropCounts",
+      "airdropCounts(address):(uint256)",
+      [ethereum.Value.fromAddress(param0)]
+    );
+
+    return result[0].toBigInt();
+  }
+
+  try_airdropCounts(param0: Address): ethereum.CallResult<BigInt> {
+    let result = super.tryCall(
+      "airdropCounts",
+      "airdropCounts(address):(uint256)",
+      [ethereum.Value.fromAddress(param0)]
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
   balanceOf(owner: Address): BigInt {
     let result = super.call("balanceOf", "balanceOf(address):(uint256)", [
       ethereum.Value.fromAddress(owner)
@@ -340,44 +439,6 @@ export class Kiftables extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
-  communitySaleLive(): boolean {
-    let result = super.call(
-      "communitySaleLive",
-      "communitySaleLive():(bool)",
-      []
-    );
-
-    return result[0].toBoolean();
-  }
-
-  try_communitySaleLive(): ethereum.CallResult<boolean> {
-    let result = super.tryCall(
-      "communitySaleLive",
-      "communitySaleLive():(bool)",
-      []
-    );
-    if (result.reverted) {
-      return new ethereum.CallResult();
-    }
-    let value = result.value;
-    return ethereum.CallResult.fromValue(value[0].toBoolean());
-  }
-
-  count(): BigInt {
-    let result = super.call("count", "count():(uint256)", []);
-
-    return result[0].toBigInt();
-  }
-
-  try_count(): ethereum.CallResult<BigInt> {
-    let result = super.tryCall("count", "count():(uint256)", []);
-    if (result.reverted) {
-      return new ethereum.CallResult();
-    }
-    let value = result.value;
-    return ethereum.CallResult.fromValue(value[0].toBigInt());
-  }
-
   counter(): BigInt {
     let result = super.call("counter", "counter():(uint256)", []);
 
@@ -412,44 +473,6 @@ export class Kiftables extends ethereum.SmartContract {
     }
     let value = result.value;
     return ethereum.CallResult.fromValue(value[0].toAddress());
-  }
-
-  getBaseURI(): string {
-    let result = super.call("getBaseURI", "getBaseURI():(string)", []);
-
-    return result[0].toString();
-  }
-
-  try_getBaseURI(): ethereum.CallResult<string> {
-    let result = super.tryCall("getBaseURI", "getBaseURI():(string)", []);
-    if (result.reverted) {
-      return new ethereum.CallResult();
-    }
-    let value = result.value;
-    return ethereum.CallResult.fromValue(value[0].toString());
-  }
-
-  getSeedForBatch(batch: BigInt): BigInt {
-    let result = super.call(
-      "getSeedForBatch",
-      "getSeedForBatch(uint256):(uint256)",
-      [ethereum.Value.fromUnsignedBigInt(batch)]
-    );
-
-    return result[0].toBigInt();
-  }
-
-  try_getSeedForBatch(batch: BigInt): ethereum.CallResult<BigInt> {
-    let result = super.tryCall(
-      "getSeedForBatch",
-      "getSeedForBatch(uint256):(uint256)",
-      [ethereum.Value.fromUnsignedBigInt(batch)]
-    );
-    if (result.reverted) {
-      return new ethereum.CallResult();
-    }
-    let value = result.value;
-    return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
   getShuffledTokenId(startId: BigInt): BigInt {
@@ -680,34 +703,27 @@ export class Kiftables extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toAddress());
   }
 
-  publicSaleLive(): boolean {
-    let result = super.call("publicSaleLive", "publicSaleLive():(bool)", []);
+  preRevealBaseURI(): string {
+    let result = super.call(
+      "preRevealBaseURI",
+      "preRevealBaseURI():(string)",
+      []
+    );
 
-    return result[0].toBoolean();
+    return result[0].toString();
   }
 
-  try_publicSaleLive(): ethereum.CallResult<boolean> {
-    let result = super.tryCall("publicSaleLive", "publicSaleLive():(bool)", []);
+  try_preRevealBaseURI(): ethereum.CallResult<string> {
+    let result = super.tryCall(
+      "preRevealBaseURI",
+      "preRevealBaseURI():(string)",
+      []
+    );
     if (result.reverted) {
       return new ethereum.CallResult();
     }
     let value = result.value;
-    return ethereum.CallResult.fromValue(value[0].toBoolean());
-  }
-
-  revealCount(): BigInt {
-    let result = super.call("revealCount", "revealCount():(uint256)", []);
-
-    return result[0].toBigInt();
-  }
-
-  try_revealCount(): ethereum.CallResult<BigInt> {
-    let result = super.tryCall("revealCount", "revealCount():(uint256)", []);
-    if (result.reverted) {
-      return new ethereum.CallResult();
-    }
-    let value = result.value;
-    return ethereum.CallResult.fromValue(value[0].toBigInt());
+    return ethereum.CallResult.fromValue(value[0].toString());
   }
 
   royaltyInfo(
@@ -904,6 +920,40 @@ export class ConstructorCall__Outputs {
   }
 }
 
+export class AirdropCall extends ethereum.Call {
+  get inputs(): AirdropCall__Inputs {
+    return new AirdropCall__Inputs(this);
+  }
+
+  get outputs(): AirdropCall__Outputs {
+    return new AirdropCall__Outputs(this);
+  }
+}
+
+export class AirdropCall__Inputs {
+  _call: AirdropCall;
+
+  constructor(call: AirdropCall) {
+    this._call = call;
+  }
+
+  get _to(): Address {
+    return this._call.inputValues[0].value.toAddress();
+  }
+
+  get _tokenIds(): Array<BigInt> {
+    return this._call.inputValues[1].value.toBigIntArray();
+  }
+}
+
+export class AirdropCall__Outputs {
+  _call: AirdropCall;
+
+  constructor(call: AirdropCall) {
+    this._call = call;
+  }
+}
+
 export class ApproveCall extends ethereum.Call {
   get inputs(): ApproveCall__Inputs {
     return new ApproveCall__Inputs(this);
@@ -934,40 +984,6 @@ export class ApproveCall__Outputs {
   _call: ApproveCall;
 
   constructor(call: ApproveCall) {
-    this._call = call;
-  }
-}
-
-export class BulkTransferCall extends ethereum.Call {
-  get inputs(): BulkTransferCall__Inputs {
-    return new BulkTransferCall__Inputs(this);
-  }
-
-  get outputs(): BulkTransferCall__Outputs {
-    return new BulkTransferCall__Outputs(this);
-  }
-}
-
-export class BulkTransferCall__Inputs {
-  _call: BulkTransferCall;
-
-  constructor(call: BulkTransferCall) {
-    this._call = call;
-  }
-
-  get _to(): Address {
-    return this._call.inputValues[0].value.toAddress();
-  }
-
-  get _tokenIds(): Array<BigInt> {
-    return this._call.inputValues[1].value.toBigIntArray();
-  }
-}
-
-export class BulkTransferCall__Outputs {
-  _call: BulkTransferCall;
-
-  constructor(call: BulkTransferCall) {
     this._call = call;
   }
 }
@@ -1019,8 +1035,8 @@ export class MintCommunitySaleCall__Inputs {
     this._call = call;
   }
 
-  get numberOfTokens(): i32 {
-    return this._call.inputValues[0].value.toI32();
+  get numberOfTokens(): BigInt {
+    return this._call.inputValues[0].value.toBigInt();
   }
 
   get merkleProof(): Array<Bytes> {
