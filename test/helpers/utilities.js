@@ -6,7 +6,7 @@ const {
 } = require('../../config/config');
 
 const deployAllContracts = async () => {
-  const [owner] = await ethers.getSigners();
+  const [deployer, gnosisSafe] = await ethers.getSigners();
 
   const MOCK_SUBSCRIPTION_ID = 0;
   // const MOCK_LINK = constants.AddressZero;        // not needed
@@ -17,14 +17,15 @@ const deployAllContracts = async () => {
   const vrfCoordFactory = await ethers.getContractFactory(
     vrfCoordinatorContract
   );
-  const mockVrfCoordinator = await vrfCoordFactory.connect(owner).deploy();
+  const mockVrfCoordinator = await vrfCoordFactory.connect(deployer).deploy();
 
   return kiftContractFactory.deploy(
     BASE_PREREVEAL_URL,
     CHAINLINK_KEY_HASH,
     mockVrfCoordinator.address,
     MOCK_SUBSCRIPTION_ID,
-    LOCAL_OPENSEA_PROXY
+    LOCAL_OPENSEA_PROXY,
+    gnosisSafe.address
   );
 };
 

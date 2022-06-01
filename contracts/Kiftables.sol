@@ -2,7 +2,6 @@
 pragma solidity ^0.8.2;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/interfaces/IERC2981.sol";
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
@@ -16,7 +15,6 @@ import "./BatchReveal.sol";
 
 contract Kiftables is
     ERC721A,
-    IERC2981,
     Ownable,
     ReentrancyGuard,
     VRFConsumerBaseV2,
@@ -27,6 +25,7 @@ contract Kiftables is
     string public verificationHash;
     address private openSeaProxyRegistryAddress;
     bool private isOpenSeaProxyActive = true;
+    address private gnosisSafe;
 
     uint256 public constant MAX_KIFTABLES_PER_WALLET = 5;
     uint256 public constant maxKiftables = 10000;
@@ -76,7 +75,6 @@ contract Kiftables is
         _;
     }
 
-    // TODO check usage of _totalMinted()
     modifier canMintKiftables(uint256 numberOfTokens) {
         require(
             _totalMinted() + numberOfTokens <= maxKiftables,
@@ -110,28 +108,28 @@ contract Kiftables is
         bytes32 _s_keyHash,
         address _vrfCoordinator,
         uint64 _s_subscriptionId,
-        address _openSeaProxyRegistryAddress
+        address _openSeaProxyRegistryAddress,
+        address _gnosisSafe
     ) ERC721A("Kiftables", "KIFT") VRFConsumerBaseV2(_vrfCoordinator) {
         COORDINATOR = VRFCoordinatorV2Interface(_vrfCoordinator);
         s_keyHash = _s_keyHash;
         s_subscriptionId = _s_subscriptionId;
         preRevealBaseURI = _preRevealURI;
         openSeaProxyRegistryAddress = _openSeaProxyRegistryAddress;
+        gnosisSafe = _gnosisSafe;
     }
 
     // ============ Treasury ============
 
-    // TODO test hardcoding gnosis safe
     function treasuryMint() public onlyOwner {
         require(treasuryMinted == false, "Treasury can only be minted once");
-        _safeMint(msg.sender, maxTreasuryKiftables);
+        _safeMint(gnosisSafe, maxTreasuryKiftables);
         treasuryMinted = true;
         emit MintTreasury();
     }
 
     // ============ Airdrop ============
 
-    // TODO maybe should be external
     function airdrop(address _to, uint256[] memory _tokenIds) public onlyOwner {
         for (uint256 i = 0; i < _tokenIds.length; i++) {
             airdropCounts[_to]++;
@@ -173,7 +171,6 @@ contract Kiftables is
             "Max Kiftables to mint in community sale is five"
         );
 
-        // TODO check usage of _totalMinted()
         require(
             _totalMinted() + numberOfTokens <= maxCommunitySaleKiftables,
             "Not enough Kiftables remaining to mint in community sale"
@@ -196,11 +193,10 @@ contract Kiftables is
         baseURI = _baseURI;
     }
 
-    function setPreRevealUri(string memory _uri) external onlyOwner {
-        preRevealBaseURI = _uri;
+    function setPreRevealURI(string memory _prerevealURI) external onlyOwner {
+        preRevealBaseURI = _prerevealURI;
     }
 
-    // Disable gasless listings in case opensea ever shuts down or is compromised
     function setIsOpenSeaProxyActive(bool _isOpenSeaProxyActive)
         external
         onlyOwner
@@ -236,13 +232,7 @@ contract Kiftables is
         verificationHash = _verificationHash;
     }
 
-    function withdraw() public onlyOwner {
-        uint256 balance = address(this).balance;
-        payable(msg.sender).transfer(balance);
-    }
-
-    // https://consensys.github.io/smart-contract-best-practices/development-recommendations/general/external-calls/#dont-use-transfer-or-send
-    function backupWithdraw() public payable onlyOwner {
+    function withdraw() public payable onlyOwner {
         (bool success, ) = payable(msg.sender).call{
             value: address(this).balance
         }("");
@@ -256,26 +246,23 @@ contract Kiftables is
 
     // ============ CHAINLINK FUNCTIONS ============
 
-    // TODO leave as onlyOwner or set back to public?
-    // batchNumber belongs to [0, TOKEN_LIMIT/REVEAL_BATCH_SIZE]
     function revealNextBatch() public onlyOwner {
         require(
             maxKiftables >= (lastTokenRevealed + REVEAL_BATCH_SIZE),
             "maxKiftables too low"
         );
 
-        // requesting randomness
         COORDINATOR.requestRandomWords(
             s_keyHash,
             s_subscriptionId,
-            3, // requestConfirmations
-            100000, // callbackGasLimit
-            1 // numWords
+            3, 
+            100000, 
+            1 
         );
     }
 
     function fulfillRandomWords(
-        uint256, /* requestId */
+        uint256,
         uint256[] memory randomWords
     ) internal override {
         require(
@@ -287,17 +274,13 @@ contract Kiftables is
 
     // ============ FUNCTION OVERRIDES ============
 
-    /**
-     * @dev Override isApprovedForAll to allowlist user's OpenSea proxy accounts to enable gas-less listings.
-     */
     function isApprovedForAll(address owner, address operator)
         public
         view
         override
         returns (bool)
     {
-        // Get a reference to OpenSea's proxy registry contract by instantiating
-        // the contract using the already existing address.
+    
         ProxyRegistry proxyRegistry = ProxyRegistry(
             openSeaProxyRegistryAddress
         );
@@ -311,9 +294,6 @@ contract Kiftables is
         return super.isApprovedForAll(owner, operator);
     }
 
-    /**
-     * @dev See {IERC721Metadata-tokenURI}.
-     */
     function tokenURI(uint256 _tokenId)
         public
         view
@@ -338,24 +318,9 @@ contract Kiftables is
             );
     }
 
-    /**
-     * on chain royalties
-     * @dev See {IERC165-royaltyInfo}.
-     */
-    function royaltyInfo(uint256 _tokenId, uint256 _salePrice)
-        external
-        view
-        override
-        returns (address receiver, uint256 royaltyAmount)
-    {
-        require(_exists(_tokenId), "Nonexistent token");
-
-        return (address(this), SafeMath.div(SafeMath.mul(_salePrice, 5), 100));
-    }
 }
 
-// These contract definitions are used to create a reference to the OpenSea
-// ProxyRegistry contract by using the registry's address (see isApprovedForAll).
+
 contract OwnableDelegateProxy {
 
 }

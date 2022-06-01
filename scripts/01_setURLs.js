@@ -18,7 +18,7 @@ const kiftContract = new ethers.Contract(
 
 async function main() {
 
-  const tx0 = await kiftContract.setPreRevealUri(BASE_PREREVEAL_URL);
+  const tx0 = await kiftContract.setPreRevealURI(BASE_PREREVEAL_URL);
   const receipt0 = await tx0.wait();
   console.log(`Update preveal url: `, await kiftContract.preRevealBaseURI());
   

@@ -17,11 +17,11 @@ const kiftContract = new ethers.Contract(
 );
 
 async function main() {
-  const tx0 = await kiftContract.transferOwnership(GNOSIS_ADDRESS);
-  await tx0.wait();
+  // const tx0 = await kiftContract.transferOwnership(GNOSIS_ADDRESS);
+  // await tx0.wait();
 
 
-  const tx1 = await kiftContract.connect(GNOSIS_ADDRESS).treasuryMint();
+  const tx1 = await kiftContract.treasuryMint();
   await tx1.wait();
 
   console.log(
