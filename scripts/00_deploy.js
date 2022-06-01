@@ -1,5 +1,5 @@
 const hre = require('hardhat');
-const { BASE_PREREVEAL_URL } = require('../config/config');
+const { BASE_PREREVEAL_URL, RINKEBY_OPENSEA_PROXY } = require('../config/config');
 async function main() {
   const Kiftables = await hre.ethers.getContractFactory('Kiftables');
 	
@@ -11,7 +11,8 @@ async function main() {
     BASE_PREREVEAL_URL,
     s_keyHash,
     vrfCoordinator,
-    subscriptionId
+    subscriptionId,
+    RINKEBY_OPENSEA_PROXY,
   );
 
   await kiftables.deployed();

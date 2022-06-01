@@ -22,7 +22,7 @@ describe('Mint Treasury', async () => {
     expect(await kiftables.treasuryMinted()).to.equal(false);
     await kiftables.connect(gnosisSafe).treasuryMint();
     expect(await kiftables.treasuryMinted()).to.equal(true);
-    expect(await kiftables.counter()).to.equal(TREASURY_SIZE);
+    expect(await kiftables.nextTokenId()).to.equal(TREASURY_SIZE);
   });
 
   it('Shouldnt allow treasury to be minted twice', async () => {
