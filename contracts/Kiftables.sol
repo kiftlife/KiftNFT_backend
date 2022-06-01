@@ -67,7 +67,7 @@ contract Kiftables is
     modifier maxKiftablesPerWallet(uint256 numberOfTokens) {
         uint256 numAirdropped = airdropCounts[msg.sender];
         require(
-            numberOfTokens <= 5 &&
+            numberOfTokens <= MAX_KIFTABLES_PER_WALLET &&
                 balanceOf(msg.sender) - numAirdropped + numberOfTokens <=
                 MAX_KIFTABLES_PER_WALLET,
             "Max Kiftables to mint is five"
@@ -152,8 +152,9 @@ contract Kiftables is
         _safeMint(msg.sender, numberOfTokens);
     }
 
+    // TODO put back to uint8
     function mintCommunitySale(
-        uint8 numberOfTokens,
+        uint256 numberOfTokens,
         bytes32[] calldata merkleProof
     )
         external
