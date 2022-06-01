@@ -7,11 +7,11 @@ require('hardhat-contract-sizer');
 require('dotenv').config();
 
 const {
-  ALCHEMY_POLYGON_API_URL,
   ALCHEMY_RINKEBY_API_URL,
-  PRIVATE_KEY,
+  DEV_PRIVATE_KEY,
   COINMARKETCAP_KEY,
-  ETHERSCAN_KEY
+  ETHERSCAN_KEY,
+  INFURA_API_URL
 } = process.env;
 
 // This is a sample Hardhat task. To learn how to create your own go to
@@ -48,12 +48,12 @@ module.exports = {
     },
     rinkeby: {
       url: ALCHEMY_RINKEBY_API_URL,
-      accounts: [PRIVATE_KEY]
-    }
-    // polygon_mumbai: {
-    //   url: ALCHEMY_POLYGON_API_URL,
-    //   accounts: [PRIVATE_KEY]
-    // }
+      accounts: [DEV_PRIVATE_KEY]
+    },
+    mainnet: {
+      url: INFURA_API_URL,
+      accounts: [PROD_PRIVATE_KEY]
+  }
   },
   etherscan: {
     apiKey: ETHERSCAN_KEY
