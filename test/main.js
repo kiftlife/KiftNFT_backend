@@ -82,7 +82,7 @@ describe('Kiftables Run Through', async () => {
   });
 
   it('Initial counters are all 0', async () => {
-    expect(await kiftables.counter()).to.equal(0);
+    expect(await kiftables.nextTokenId()).to.equal(0);
     expect(await kiftables.lastTokenRevealed()).to.equal(0);
   });
 
@@ -122,7 +122,7 @@ describe('Kiftables Run Through', async () => {
     expect(await kiftables.treasuryMinted()).to.equal(false);
     await kiftables.connect(gnosisSafe).treasuryMint();
     expect(await kiftables.treasuryMinted()).to.equal(true);
-    expect(await kiftables.counter()).to.equal(TREASURY_SIZE);
+    expect(await kiftables.nextTokenId()).to.equal(TREASURY_SIZE);
     // TODO :
     // Should the counter by 999 or 1000 here?
     // After minting 1000 tokens, the counter should be 999 but it's 1000
@@ -144,7 +144,7 @@ describe('Kiftables Run Through', async () => {
 
   it('Show IPFS prereveal metadata', async () => {
     const firstToken = 0;
-    const lastToken = (await kiftables.counter()).toNumber();
+    const lastToken = (await kiftables.nextTokenId()).toNumber();
     expect(await kiftables.tokenURI(firstToken)).to.equal(BASE_PREREVEAL_URL);
     expect(await kiftables.tokenURI(lastToken - 1)).to.equal(
       BASE_PREREVEAL_URL
@@ -290,7 +290,7 @@ describe('Kiftables Run Through', async () => {
   });
 
   it('Reveal Minted Tokens', async () => {
-    const lastToken = (await kiftables.counter()).toNumber();
+    const lastToken = (await kiftables.nextTokenId()).toNumber();
     const batchesCount = Math.floor(lastToken / REVEAL_BATCH_SIZE);
     batches = [];
     for (let i = 0; i < batchesCount; i++) {
@@ -329,7 +329,7 @@ describe('Kiftables Run Through', async () => {
   });
 
   it('Reveal Entire Collection', async () => {
-    const lastMintedToken = (await kiftables.counter()).toNumber();
+    const lastMintedToken = (await kiftables.nextTokenId()).toNumber();
     const lastRevealedToken = (await kiftables.lastTokenRevealed()).toNumber();
     // reveal the remaining 35 batches
     const batchesCount = Math.floor(

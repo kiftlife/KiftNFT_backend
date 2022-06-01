@@ -439,14 +439,14 @@ export class Kiftables extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
-  counter(): BigInt {
-    let result = super.call("counter", "counter():(uint256)", []);
+  nextTokenId(): BigInt {
+    let result = super.call("counter", "nextTokenId():(uint256)", []);
 
     return result[0].toBigInt();
   }
 
-  try_counter(): ethereum.CallResult<BigInt> {
-    let result = super.tryCall("counter", "counter():(uint256)", []);
+  try_nextTokenId(): ethereum.CallResult<BigInt> {
+    let result = super.tryCall("counter", "nextTokenId():(uint256)", []);
     if (result.reverted) {
       return new ethereum.CallResult();
     }

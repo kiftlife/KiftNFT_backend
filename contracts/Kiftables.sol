@@ -2,7 +2,7 @@
 pragma solidity ^0.8.2;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/interfaces/IERC2981.sol";
+import "@openzeppelin/contracts/interfaces/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
@@ -15,7 +15,6 @@ import "./BatchReveal.sol";
 
 contract Kiftables is
     ERC721A,
-    IERC2981,
     Ownable,
     ReentrancyGuard,
     VRFConsumerBaseV2,
@@ -23,14 +22,18 @@ contract Kiftables is
 {
     string public baseURI;
     string public preRevealBaseURI;
+    string public verificationHash;
+    address private openSeaProxyRegistryAddress;
+    bool private isOpenSeaProxyActive = true;
+    address private gnosisSafe;
 
-    uint256 public constant MAX_KIFTABLES_PER_WALLET = 5; 
+    uint256 public constant MAX_KIFTABLES_PER_WALLET = 5;
     uint256 public constant maxKiftables = 10000;
     uint256 public constant maxCommunitySaleKiftables = 7000;
-    uint256 public constant maxTreasuryKiftables = 1000; 
+    uint256 public constant maxTreasuryKiftables = 1000;
     bool public treasuryMinted = false;
 
-    uint256 public constant PUBLIC_SALE_PRICE = 0.1 ether; 
+    uint256 public constant PUBLIC_SALE_PRICE = 0.1 ether;
     bool public isPublicSaleActive = false;
 
     uint256 public constant COMMUNITY_SALE_PRICE = 0.08 ether;
@@ -104,30 +107,23 @@ contract Kiftables is
         string memory _preRevealURI,
         bytes32 _s_keyHash,
         address _vrfCoordinator,
-        uint64 _s_subscriptionId
+        uint64 _s_subscriptionId,
+        address _openSeaProxyRegistryAddress,
+        address _gnosisSafe
     ) ERC721A("Kiftables", "KIFT") VRFConsumerBaseV2(_vrfCoordinator) {
         COORDINATOR = VRFCoordinatorV2Interface(_vrfCoordinator);
         s_keyHash = _s_keyHash;
         s_subscriptionId = _s_subscriptionId;
-        setPreRevealUri(_preRevealURI);
-    }
-
-    // ============ DEV-ONLY TESTING ============
-
-    function verify(bytes32[] calldata proof, bytes32 root)
-        public
-        view
-        returns (bool)
-    {
-        bytes32 leaf = keccak256(abi.encodePacked(msg.sender));
-        return MerkleProof.verify(proof, root, leaf);
+        preRevealBaseURI = _preRevealURI;
+        openSeaProxyRegistryAddress = _openSeaProxyRegistryAddress;
+        gnosisSafe = _gnosisSafe;
     }
 
     // ============ Treasury ============
 
     function treasuryMint() public onlyOwner {
         require(treasuryMinted == false, "Treasury can only be minted once");
-        _safeMint(msg.sender, maxTreasuryKiftables);
+        _safeMint(gnosisSafe, maxTreasuryKiftables);
         treasuryMinted = true;
         emit MintTreasury();
     }
@@ -139,7 +135,6 @@ contract Kiftables is
             airdropCounts[_to]++;
             safeTransferFrom(msg.sender, _to, _tokenIds[i]);
         }
-
         emit Airdrop(_to, _tokenIds.length);
     }
 
@@ -157,9 +152,8 @@ contract Kiftables is
         _safeMint(msg.sender, numberOfTokens);
     }
 
-    // TODO could be put back to uint8
     function mintCommunitySale(
-        uint256 numberOfTokens,
+        uint8 numberOfTokens,
         bytes32[] calldata merkleProof
     )
         external
@@ -189,8 +183,8 @@ contract Kiftables is
 
     // ============ PUBLIC READ-ONLY FUNCTIONS ============
 
-    function counter() public view returns (uint256) {
-        return _currentIndex;
+    function nextTokenId() external view returns (uint256) {
+        return _totalMinted();
     }
 
     // ============ OWNER-ONLY ADMIN FUNCTIONS ============
@@ -199,18 +193,16 @@ contract Kiftables is
         baseURI = _baseURI;
     }
 
-    function setPreRevealUri(string memory _uri) public onlyOwner {
-        preRevealBaseURI = _uri;
+    function setPreRevealURI(string memory _prerevealURI) external onlyOwner {
+        preRevealBaseURI = _prerevealURI;
     }
 
-    // function to disable gasless listings for security in case
-    // opensea ever shuts down or is compromised
-    // function setIsOpenSeaProxyActive(bool _isOpenSeaProxyActive)
-    //     external
-    //     onlyOwner
-    // {
-    //     isOpenSeaProxyActive = _isOpenSeaProxyActive;
-    // }
+    function setIsOpenSeaProxyActive(bool _isOpenSeaProxyActive)
+        external
+        onlyOwner
+    {
+        isOpenSeaProxyActive = _isOpenSeaProxyActive;
+    }
 
     function setIsPublicSaleActive(bool _isPublicSaleActive)
         external
@@ -233,6 +225,13 @@ contract Kiftables is
         communityListMerkleRoot = _merkleRoot;
     }
 
+    function setVerificationHash(string memory _verificationHash)
+        external
+        onlyOwner
+    {
+        verificationHash = _verificationHash;
+    }
+
     function withdraw() public payable onlyOwner {
         (bool success, ) = payable(msg.sender).call{
             value: address(this).balance
@@ -240,27 +239,30 @@ contract Kiftables is
         require(success);
     }
 
+    function withdrawTokens(IERC20 token) public onlyOwner {
+        uint256 balance = token.balanceOf(address(this));
+        token.transfer(msg.sender, balance);
+    }
+
     // ============ CHAINLINK FUNCTIONS ============
 
-    // batchNumber belongs to [0, TOKEN_LIMIT/REVEAL_BATCH_SIZE]
-    function revealNextBatch() public {
+    function revealNextBatch() public onlyOwner {
         require(
             maxKiftables >= (lastTokenRevealed + REVEAL_BATCH_SIZE),
             "maxKiftables too low"
         );
 
-        // requesting randomness
         COORDINATOR.requestRandomWords(
             s_keyHash,
             s_subscriptionId,
-            3, // requestConfirmations
-            100000, // callbackGasLimit         
-            1 // numWords
+            3, 
+            100000, 
+            1 
         );
     }
 
     function fulfillRandomWords(
-        uint256, /* requestId */
+        uint256,
         uint256[] memory randomWords
     ) internal override {
         require(
@@ -270,9 +272,28 @@ contract Kiftables is
         setBatchSeed(randomWords[0]);
     }
 
-    /**
-     * @dev See {IERC721Metadata-tokenURI}.
-     */
+    // ============ FUNCTION OVERRIDES ============
+
+    function isApprovedForAll(address owner, address operator)
+        public
+        view
+        override
+        returns (bool)
+    {
+    
+        ProxyRegistry proxyRegistry = ProxyRegistry(
+            openSeaProxyRegistryAddress
+        );
+        if (
+            isOpenSeaProxyActive &&
+            address(proxyRegistry.proxies(owner)) == operator
+        ) {
+            return true;
+        }
+
+        return super.isApprovedForAll(owner, operator);
+    }
+
     function tokenURI(uint256 _tokenId)
         public
         view
@@ -297,18 +318,13 @@ contract Kiftables is
             );
     }
 
-    /**
-     * on chain royalties
-     * @dev See {IERC165-royaltyInfo}.
-     */
-    function royaltyInfo(uint256 _tokenId, uint256 _salePrice)
-        external
-        view
-        override
-        returns (address receiver, uint256 royaltyAmount)
-    {
-        require(_exists(_tokenId), "Nonexistent token");
+}
 
-        return (address(this), SafeMath.div(SafeMath.mul(_salePrice, 5), 100));
-    }
+
+contract OwnableDelegateProxy {
+
+}
+
+contract ProxyRegistry {
+    mapping(address => OwnableDelegateProxy) public proxies;
 }

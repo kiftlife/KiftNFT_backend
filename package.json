@@ -16,6 +16,7 @@
     "chai": "^4.3.4",
     "erc721a": "^3.3.0",
     "ethereum-waffle": "^3.4.0",
+    "hardhat-contract-sizer": "^2.5.1",
     "hardhat-gas-reporter": "^1.0.8",
     "web3": "^1.7.3"
   },

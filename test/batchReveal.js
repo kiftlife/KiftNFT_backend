@@ -60,14 +60,14 @@ describe('BatchReveal', async () => {
       '************* MINT REMAINING 6999 (3001 - 9999) *************'
     );
 
-    mintCount = 10000 - (await kiftables.counter());
+    mintCount = 10000 - (await kiftables.nextTokenId());
     console.log('Remaining Tokens to mint: ', mintCount);
     amount = parseFloat((0.1 * mintCount).toString()).toFixed(1); // hack city
     await kiftables.connect(addr3).mint(mintCount, {
       value: ethers.utils.parseEther(amount)
     });
 
-    const totalMinted = parseInt(await kiftables.counter());
+    const totalMinted = parseInt(await kiftables.nextTokenId());
     expect(totalMinted).to.equal(10000);
 
     const remainingBatches = generateTokenIdArray(0, 10000 / 200);

@@ -3,6 +3,7 @@ require('@nomicfoundation/hardhat-chai-matchers');
 require('@nomiclabs/hardhat-ethers');
 require('@nomiclabs/hardhat-etherscan');
 require('hardhat-gas-reporter');
+require('hardhat-contract-sizer');
 require('dotenv').config();
 
 const {
@@ -34,14 +35,20 @@ module.exports = {
   paths: {
     artifacts: './src/artifacts'
   },
+  settings: {
+    optimizer: {
+      enabled: true,
+      runs: 1000,
+    },
+  },
+
   networks: {
     hardhat: {
       chainId: 1337
     },
     rinkeby: {
       url: ALCHEMY_RINKEBY_API_URL,
-      accounts: [PRIVATE_KEY],
-      blockGasLimit: 8000000
+      accounts: [PRIVATE_KEY]
     }
     // polygon_mumbai: {
     //   url: ALCHEMY_POLYGON_API_URL,
