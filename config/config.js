@@ -2,6 +2,8 @@
 const BASE_PREREVEAL_URL = `ipfs://QmdwirNbpsi3aymwqEAtftMni5kmrqah44epkxJrAiU7aD`
 const IPFS_BASE_URL = `ipfs://QmTrHZFPNpjYTgEdqu4FRjxW8Y5yCkrKeQZ1N2odQNyUwt`
 
+const PROD_PREREVEAL_URL = `ipfs://QmTe725Vfhoy9aFSF5TREmyZbfMzPZAXbDXy9kq36wzGs2`
+
 // const BASE_PREREVEAL_URL = 'ipfs://a-placeholder-image-path';
 // const IPFS_BASE_URL = 'ifps://a-real-path'
 
@@ -52,4 +54,5 @@ const airdropDevAddresses = [
     LOCAL_OPENSEA_PROXY,
     RINKEBY_OPENSEA_PROXY,
     MAINNET_OPENSEA_PROXY,
+    PROD_PREREVEAL_URL
   }
