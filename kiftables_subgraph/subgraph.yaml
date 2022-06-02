@@ -9,9 +9,9 @@ dataSources:
     name: Kiftables
     network: rinkeby
     source:
-      address: "0x7d099277525C7e4B14d566fdf8a121529FBe4387"
+      address: "0xf40A9c21B4A6787FCAa00e93a251a04f67f82fDd"
       abi: Kiftables
-      startBlock: 10747403
+      startBlock: 10782770
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.5

@@ -1,7 +1,7 @@
 const { ethers } = require('hardhat');
 require('dotenv').config();
 
-const { ALCHEMY_API_KEY, DEV_PRIVATE_KEY, TEST_CONTRACT_ADDRESS, GNOSIS_ADDRESS } =
+const { ALCHEMY_API_KEY, DEV_PRIVATE_KEY, TEST_CONTRACT_ADDRESS, DEV_GNOSIS_ADDRESS } =
   process.env;
 
 const contract = require('../src/artifacts/contracts/Kiftables.sol/Kiftables.json');
@@ -26,7 +26,7 @@ async function main() {
 
   console.log(
     'Treasury minted: ',
-    await kiftContract.balanceOf(GNOSIS_ADDRESS)
+    await kiftContract.balanceOf(DEV_GNOSIS_ADDRESS)
   );
 }
 
