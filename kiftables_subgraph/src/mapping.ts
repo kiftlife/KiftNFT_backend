@@ -16,9 +16,13 @@ import { Attribute, Token, User } from '../generated/schema'
 export function handleTransfer(event: TransferEvent): void {
   /* load the token from the existing Graph Node */
   let token = Token.load(event.params.tokenId.toString())
+  log.info(`[KIFT:handleTransfer] token transfer initiated for id: ${event.params.tokenId.toString()}`, [])
+  
   if (!token) {
     /* if the token does not yet exist, create it */
     token = new Token(event.params.tokenId.toString())
+    log.info(`[KIFT:handleTransfer] new token being created for id ${token.id}`, [])
+
     token.tokenID = event.params.tokenId
     token.revealed = false
 
@@ -34,7 +38,7 @@ export function handleTransfer(event: TransferEvent): void {
     let ipfsData = ipfs.cat(ipfsHash)
 
     if (!ipfsData) {
-      log.error(`[KIFT] No ipfs data found for tokenId: ${token.tokenID.toString()}. tokenURI: ${tokenURI}`, []);
+      log.error(`[KIFT:handleTransfer] No ipfs data found for tokenId: ${token.tokenID.toString()}. tokenURI: ${tokenURI}`, []);
     }
 
     if (ipfsData) {
@@ -55,7 +59,8 @@ export function handleTransfer(event: TransferEvent): void {
         }
 
 
-        // TODO: handle attrbutes. I think initial transfer attributes will always be empty since not revealed right???
+        // TODO: Currently, initial transfer attributes will always be empty since not revealed right, but
+        // we should confirm this.
         token.attributes = []        
       }
     }
