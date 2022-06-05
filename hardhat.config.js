@@ -51,6 +51,6 @@ module.exports = {
   gasReporter: {
     currency: 'USD',
     coinmarketcap: COINMARKETCAP_KEY,
-    gasPrice: 40
+    gasPrice: 50
   }
 };

@@ -90,7 +90,7 @@ describe('Compare Community vs Public Mint Gas Fees', async () => {
   it('Allow community sale to allowList Member', async () => {
     await kiftables.connect(gnosisSafe).setIsCommunitySaleActive(true);
     const proof = allowListTree.getHexProof(allowListHash[2]);
-    mintCount = 1000;
+    mintCount = 5;
     amount = parseFloat((0.08 * mintCount).toString()).toFixed(2);
     await kiftables.connect(community1).mintCommunitySale(mintCount, proof, {
       value: ethers.utils.parseEther(amount)
@@ -102,13 +102,12 @@ describe('Compare Community vs Public Mint Gas Fees', async () => {
   it('Allow public mint', async () => {
     await kiftables.connect(gnosisSafe).setIsCommunitySaleActive(false);
     await kiftables.connect(gnosisSafe).setIsPublicSaleActive(true);
-    mintCount = 1000;
+    mintCount = 5;
     amount = parseFloat((0.1 * mintCount).toString()).toFixed(2);
     await kiftables.connect(public1).mint(mintCount, {
       value: ethers.utils.parseEther(amount)
     });
     expect(await kiftables.balanceOf(public1.address)).to.equal(mintCount);
   });
-
 
 });
