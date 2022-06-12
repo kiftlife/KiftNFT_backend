@@ -80,7 +80,6 @@ export function handleTransfer(event: TransferEvent): void {
 }
 
 export function handleReveal(event: RevealEvent): void {
-  let lastTokenRevealed = event.params.lastTokenRevealed.toString()
   let contract = KiftablesContract.bind(event.address)
 
   const revealFinish = event.params.lastTokenRevealed.toI32()
@@ -107,7 +106,7 @@ export function handleReveal(event: RevealEvent): void {
       let ipfsData = ipfs.cat(ipfsHash)
       
       if (!ipfsData) {
-        log.error(`[KIFT:handleReveal] No ipfs data found for tokenId: ${token.tokenID.toString()}. tokenURI: ${tokenURI}`, []);
+        log.error(`[KIFT:handleReveal] No ipfs data found for tokenId: ${token.tokenID.toString()}. tokenURI: ${tokenURI}. ipfsHash: ${ipfsHash}`, []);
       }
 
       if (ipfsData) {

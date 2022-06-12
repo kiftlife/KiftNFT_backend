@@ -164,6 +164,45 @@ export class Transfer__Params {
   }
 }
 
+export class WithdrawBalance extends ethereum.Event {
+  get params(): WithdrawBalance__Params {
+    return new WithdrawBalance__Params(this);
+  }
+}
+
+export class WithdrawBalance__Params {
+  _event: WithdrawBalance;
+
+  constructor(event: WithdrawBalance) {
+    this._event = event;
+  }
+
+  get from(): Address {
+    return this._event.parameters[0].value.toAddress();
+  }
+
+  get amount(): BigInt {
+    return this._event.parameters[1].value.toBigInt();
+  }
+}
+
+export class Kiftables__royaltyInfoResult {
+  value0: Address;
+  value1: BigInt;
+
+  constructor(value0: Address, value1: BigInt) {
+    this.value0 = value0;
+    this.value1 = value1;
+  }
+
+  toMap(): TypedMap<string, ethereum.Value> {
+    let map = new TypedMap<string, ethereum.Value>();
+    map.set("value0", ethereum.Value.fromAddress(this.value0));
+    map.set("value1", ethereum.Value.fromUnsignedBigInt(this.value1));
+    return map;
+  }
+}
+
 export class Kiftables extends ethereum.SmartContract {
   static bind(address: Address): Kiftables {
     return new Kiftables("Kiftables", address);
@@ -400,14 +439,14 @@ export class Kiftables extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
-  nextTokenId(): BigInt {
-    let result = super.call("counter", "nextTokenId():(uint256)", []);
+  counter(): BigInt {
+    let result = super.call("counter", "counter():(uint256)", []);
 
     return result[0].toBigInt();
   }
 
-  try_nextTokenId(): ethereum.CallResult<BigInt> {
-    let result = super.tryCall("counter", "nextTokenId():(uint256)", []);
+  try_counter(): ethereum.CallResult<BigInt> {
+    let result = super.tryCall("counter", "counter():(uint256)", []);
     if (result.reverted) {
       return new ethereum.CallResult();
     }
@@ -434,6 +473,29 @@ export class Kiftables extends ethereum.SmartContract {
     }
     let value = result.value;
     return ethereum.CallResult.fromValue(value[0].toAddress());
+  }
+
+  getShuffledTokenId(startId: BigInt): BigInt {
+    let result = super.call(
+      "getShuffledTokenId",
+      "getShuffledTokenId(uint256):(uint256)",
+      [ethereum.Value.fromUnsignedBigInt(startId)]
+    );
+
+    return result[0].toBigInt();
+  }
+
+  try_getShuffledTokenId(startId: BigInt): ethereum.CallResult<BigInt> {
+    let result = super.tryCall(
+      "getShuffledTokenId",
+      "getShuffledTokenId(uint256):(uint256)",
+      [ethereum.Value.fromUnsignedBigInt(startId)]
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
   isApprovedForAll(owner: Address, operator: Address): boolean {
@@ -607,21 +669,6 @@ export class Kiftables extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toString());
   }
 
-  nextTokenId(): BigInt {
-    let result = super.call("nextTokenId", "nextTokenId():(uint256)", []);
-
-    return result[0].toBigInt();
-  }
-
-  try_nextTokenId(): ethereum.CallResult<BigInt> {
-    let result = super.tryCall("nextTokenId", "nextTokenId():(uint256)", []);
-    if (result.reverted) {
-      return new ethereum.CallResult();
-    }
-    let value = result.value;
-    return ethereum.CallResult.fromValue(value[0].toBigInt());
-  }
-
   owner(): Address {
     let result = super.call("owner", "owner():(address)", []);
 
@@ -677,6 +724,49 @@ export class Kiftables extends ethereum.SmartContract {
     }
     let value = result.value;
     return ethereum.CallResult.fromValue(value[0].toString());
+  }
+
+  royaltyInfo(
+    _tokenId: BigInt,
+    _salePrice: BigInt
+  ): Kiftables__royaltyInfoResult {
+    let result = super.call(
+      "royaltyInfo",
+      "royaltyInfo(uint256,uint256):(address,uint256)",
+      [
+        ethereum.Value.fromUnsignedBigInt(_tokenId),
+        ethereum.Value.fromUnsignedBigInt(_salePrice)
+      ]
+    );
+
+    return new Kiftables__royaltyInfoResult(
+      result[0].toAddress(),
+      result[1].toBigInt()
+    );
+  }
+
+  try_royaltyInfo(
+    _tokenId: BigInt,
+    _salePrice: BigInt
+  ): ethereum.CallResult<Kiftables__royaltyInfoResult> {
+    let result = super.tryCall(
+      "royaltyInfo",
+      "royaltyInfo(uint256,uint256):(address,uint256)",
+      [
+        ethereum.Value.fromUnsignedBigInt(_tokenId),
+        ethereum.Value.fromUnsignedBigInt(_salePrice)
+      ]
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(
+      new Kiftables__royaltyInfoResult(
+        value[0].toAddress(),
+        value[1].toBigInt()
+      )
+    );
   }
 
   supportsInterface(interfaceId: Bytes): boolean {
@@ -766,27 +856,25 @@ export class Kiftables extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBoolean());
   }
 
-  verificationHash(): string {
-    let result = super.call(
-      "verificationHash",
-      "verificationHash():(string)",
-      []
-    );
+  verify(proof: Array<Bytes>, root: Bytes): boolean {
+    let result = super.call("verify", "verify(bytes32[],bytes32):(bool)", [
+      ethereum.Value.fromFixedBytesArray(proof),
+      ethereum.Value.fromFixedBytes(root)
+    ]);
 
-    return result[0].toString();
+    return result[0].toBoolean();
   }
 
-  try_verificationHash(): ethereum.CallResult<string> {
-    let result = super.tryCall(
-      "verificationHash",
-      "verificationHash():(string)",
-      []
-    );
+  try_verify(proof: Array<Bytes>, root: Bytes): ethereum.CallResult<boolean> {
+    let result = super.tryCall("verify", "verify(bytes32[],bytes32):(bool)", [
+      ethereum.Value.fromFixedBytesArray(proof),
+      ethereum.Value.fromFixedBytes(root)
+    ]);
     if (result.reverted) {
       return new ethereum.CallResult();
     }
     let value = result.value;
-    return ethereum.CallResult.fromValue(value[0].toString());
+    return ethereum.CallResult.fromValue(value[0].toBoolean());
   }
 }
 
@@ -821,14 +909,6 @@ export class ConstructorCall__Inputs {
 
   get _s_subscriptionId(): BigInt {
     return this._call.inputValues[3].value.toBigInt();
-  }
-
-  get _openSeaProxyRegistryAddress(): Address {
-    return this._call.inputValues[4].value.toAddress();
-  }
-
-  get _gnosisSafe(): Address {
-    return this._call.inputValues[5].value.toAddress();
   }
 }
 
@@ -1262,36 +1342,6 @@ export class SetIsCommunitySaleActiveCall__Outputs {
   }
 }
 
-export class SetIsOpenSeaProxyActiveCall extends ethereum.Call {
-  get inputs(): SetIsOpenSeaProxyActiveCall__Inputs {
-    return new SetIsOpenSeaProxyActiveCall__Inputs(this);
-  }
-
-  get outputs(): SetIsOpenSeaProxyActiveCall__Outputs {
-    return new SetIsOpenSeaProxyActiveCall__Outputs(this);
-  }
-}
-
-export class SetIsOpenSeaProxyActiveCall__Inputs {
-  _call: SetIsOpenSeaProxyActiveCall;
-
-  constructor(call: SetIsOpenSeaProxyActiveCall) {
-    this._call = call;
-  }
-
-  get _isOpenSeaProxyActive(): boolean {
-    return this._call.inputValues[0].value.toBoolean();
-  }
-}
-
-export class SetIsOpenSeaProxyActiveCall__Outputs {
-  _call: SetIsOpenSeaProxyActiveCall;
-
-  constructor(call: SetIsOpenSeaProxyActiveCall) {
-    this._call = call;
-  }
-}
-
 export class SetIsPublicSaleActiveCall extends ethereum.Call {
   get inputs(): SetIsPublicSaleActiveCall__Inputs {
     return new SetIsPublicSaleActiveCall__Inputs(this);
@@ -1322,62 +1372,32 @@ export class SetIsPublicSaleActiveCall__Outputs {
   }
 }
 
-export class SetPreRevealURICall extends ethereum.Call {
-  get inputs(): SetPreRevealURICall__Inputs {
-    return new SetPreRevealURICall__Inputs(this);
+export class SetPreRevealUriCall extends ethereum.Call {
+  get inputs(): SetPreRevealUriCall__Inputs {
+    return new SetPreRevealUriCall__Inputs(this);
   }
 
-  get outputs(): SetPreRevealURICall__Outputs {
-    return new SetPreRevealURICall__Outputs(this);
+  get outputs(): SetPreRevealUriCall__Outputs {
+    return new SetPreRevealUriCall__Outputs(this);
   }
 }
 
-export class SetPreRevealURICall__Inputs {
-  _call: SetPreRevealURICall;
+export class SetPreRevealUriCall__Inputs {
+  _call: SetPreRevealUriCall;
 
-  constructor(call: SetPreRevealURICall) {
+  constructor(call: SetPreRevealUriCall) {
     this._call = call;
   }
 
-  get _prerevealURI(): string {
+  get _uri(): string {
     return this._call.inputValues[0].value.toString();
   }
 }
 
-export class SetPreRevealURICall__Outputs {
-  _call: SetPreRevealURICall;
+export class SetPreRevealUriCall__Outputs {
+  _call: SetPreRevealUriCall;
 
-  constructor(call: SetPreRevealURICall) {
-    this._call = call;
-  }
-}
-
-export class SetVerificationHashCall extends ethereum.Call {
-  get inputs(): SetVerificationHashCall__Inputs {
-    return new SetVerificationHashCall__Inputs(this);
-  }
-
-  get outputs(): SetVerificationHashCall__Outputs {
-    return new SetVerificationHashCall__Outputs(this);
-  }
-}
-
-export class SetVerificationHashCall__Inputs {
-  _call: SetVerificationHashCall;
-
-  constructor(call: SetVerificationHashCall) {
-    this._call = call;
-  }
-
-  get _verificationHash(): string {
-    return this._call.inputValues[0].value.toString();
-  }
-}
-
-export class SetVerificationHashCall__Outputs {
-  _call: SetVerificationHashCall;
-
-  constructor(call: SetVerificationHashCall) {
+  constructor(call: SetPreRevealUriCall) {
     this._call = call;
   }
 }
@@ -1498,36 +1518,6 @@ export class WithdrawCall__Outputs {
   _call: WithdrawCall;
 
   constructor(call: WithdrawCall) {
-    this._call = call;
-  }
-}
-
-export class WithdrawTokensCall extends ethereum.Call {
-  get inputs(): WithdrawTokensCall__Inputs {
-    return new WithdrawTokensCall__Inputs(this);
-  }
-
-  get outputs(): WithdrawTokensCall__Outputs {
-    return new WithdrawTokensCall__Outputs(this);
-  }
-}
-
-export class WithdrawTokensCall__Inputs {
-  _call: WithdrawTokensCall;
-
-  constructor(call: WithdrawTokensCall) {
-    this._call = call;
-  }
-
-  get token(): Address {
-    return this._call.inputValues[0].value.toAddress();
-  }
-}
-
-export class WithdrawTokensCall__Outputs {
-  _call: WithdrawTokensCall;
-
-  constructor(call: WithdrawTokensCall) {
     this._call = call;
   }
 }
