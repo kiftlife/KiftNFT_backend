@@ -22,16 +22,16 @@ const getAddresses = async () => {
   return ADDRESSES;
 };
 
-const { ALCHEMY_API_KEY, PRIVATE_KEY, CONTRACT_ADDRESS } = process.env;
+const { ALCHEMY_API_KEY, DEV_PRIVATE_KEY, TEST_CONTRACT_ADDRESS } = process.env;
 
 const contract = require('../src/artifacts/contracts/Kiftables.sol/Kiftables.json');
 const alchemyProvider = new ethers.providers.AlchemyProvider(
   (network = 'rinkeby'),
   ALCHEMY_API_KEY
 );
-const signer = new ethers.Wallet(PRIVATE_KEY, alchemyProvider);
+const signer = new ethers.Wallet(DEV_PRIVATE_KEY, alchemyProvider);
 const kiftContract = new ethers.Contract(
-  CONTRACT_ADDRESS,
+  TEST_CONTRACT_ADDRESS,
   contract.abi,
   signer
 );
@@ -47,10 +47,10 @@ async function main() {
   const rootHash = buf2hex(merkleTree.getRoot());
   console.log('Root Hash: ', rootHash);
 
-  // const tx = await kiftContract.setCommunityListMerkleRoot(rootHash);
-  // await tx.wait();
+  const tx = await kiftContract.setCommunityListMerkleRoot(rootHash);
+  await tx.wait();
 
-  // console.log('AllowList Set');
+  console.log('AllowList Set');
 }
 
 main()

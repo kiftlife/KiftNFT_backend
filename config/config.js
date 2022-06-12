@@ -2,8 +2,15 @@
 const BASE_PREREVEAL_URL = `ipfs://QmdwirNbpsi3aymwqEAtftMni5kmrqah44epkxJrAiU7aD`
 const IPFS_BASE_URL = `ipfs://QmTrHZFPNpjYTgEdqu4FRjxW8Y5yCkrKeQZ1N2odQNyUwt`
 
+const PROD_PREREVEAL_URL = `ipfs://QmTe725Vfhoy9aFSF5TREmyZbfMzPZAXbDXy9kq36wzGs2`
+
 // const BASE_PREREVEAL_URL = 'ipfs://a-placeholder-image-path';
 // const IPFS_BASE_URL = 'ifps://a-real-path'
+
+const LOCAL_OPENSEA_PROXY = '0x0000000000000000000000000000000000000001';
+const RINKEBY_OPENSEA_PROXY = '0x1E525EEAF261cA41b809884CBDE9DD9E1619573A';
+const MAINNET_OPENSEA_PROXY = '0xa5409ec958c83c3f309868babaca7c86dcb077c1';
+
 
 const CHAINLINK_SUB_ID = '2879'
 const CHAINLINK_KEY_HASH = '0xd89b2bf150e3b9e13446986e571fb9cab24b13cea0a43ea20a6049a85cc807cc'
@@ -43,5 +50,9 @@ const airdropDevAddresses = [
     airdropProdAddresses,
     communityProdAddresses,
     CHAINLINK_SUB_ID,
-    CHAINLINK_KEY_HASH
+    CHAINLINK_KEY_HASH,
+    LOCAL_OPENSEA_PROXY,
+    RINKEBY_OPENSEA_PROXY,
+    MAINNET_OPENSEA_PROXY,
+    PROD_PREREVEAL_URL
   }

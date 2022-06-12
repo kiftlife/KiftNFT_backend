@@ -1,7 +1,7 @@
 const { ethers } = require('hardhat');
 require('dotenv').config();
 const { IPFS_BASE_URL, BASE_PREREVEAL_URL } = require('../config/config');
-const { ALCHEMY_API_KEY, PRIVATE_KEY, CONTRACT_ADDRESS } = process.env;
+const { ALCHEMY_API_KEY, DEV_PRIVATE_KEY, TEST_CONTRACT_ADDRESS } = process.env;
 
 const contract = require('../src/artifacts/contracts/Kiftables.sol/Kiftables.json');
 const alchemyProvider = new ethers.providers.AlchemyProvider(
@@ -9,16 +9,16 @@ const alchemyProvider = new ethers.providers.AlchemyProvider(
   ALCHEMY_API_KEY
 );
 
-const signer = new ethers.Wallet(PRIVATE_KEY, alchemyProvider);
+const signer = new ethers.Wallet(DEV_PRIVATE_KEY, alchemyProvider);
 const kiftContract = new ethers.Contract(
-  CONTRACT_ADDRESS,
+  TEST_CONTRACT_ADDRESS,
   contract.abi,
   signer
 );
 
 async function main() {
 
-  const tx0 = await kiftContract.setPreRevealUri(BASE_PREREVEAL_URL);
+  const tx0 = await kiftContract.setPreRevealURI(BASE_PREREVEAL_URL);
   const receipt0 = await tx0.wait();
   console.log(`Update preveal url: `, await kiftContract.preRevealBaseURI());
   

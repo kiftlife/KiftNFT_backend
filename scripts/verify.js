@@ -1,6 +1,6 @@
 const hre = require('hardhat');
 const { BASE_PREREVEAL_URL } = require('../config/config');
-const { CONTRACT_ADDRESS } = process.env;
+const { TEST_CONTRACT_ADDRESS } = process.env;
 
 const vrfCoordinator = '0x6168499c0cffcacd319c818142124b7a15e857ab';
 const s_keyHash =
@@ -13,7 +13,7 @@ const main = async () => {
 
   // TODO confirm this works
   await hre.run('verify:verify', {
-    address: CONTRACT_ADDRESS,
+    address: TEST_CONTRACT_ADDRESS,
     constructorArguments: [
       BASE_PREREVEAL_URL,
       s_keyHash,

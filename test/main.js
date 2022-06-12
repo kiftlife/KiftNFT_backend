@@ -5,7 +5,8 @@ const keccak256 = require('keccak256');
 const {
   BASE_PREREVEAL_URL,
   IPFS_BASE_URL,
-  CHAINLINK_KEY_HASH
+  CHAINLINK_KEY_HASH,
+  LOCAL_OPENSEA_PROXY
 } = require('../config/config');
 const { asyncForEach, generateTokenIdArray } = require('./helpers/utilities');
 
@@ -19,7 +20,8 @@ describe('Kiftables Run Through', async () => {
   const REVEAL_BATCH_SIZE = 200;
 
   let kiftables,
-    owner,
+    deployer,
+    gnosisSafe,
     contrib1,
     contrib2,
     community1,
@@ -30,14 +32,14 @@ describe('Kiftables Run Through', async () => {
     public2,
     public3,
     public4,
-    gnosisSafe,
     newContributor;
 
   let allowListHash, allowListTree;
 
   it('Successfully deploys all contracts', async () => {
     [
-      owner,
+      deployer,
+      gnosisSafe,
       contrib1,
       contrib2,
       community1,
@@ -48,7 +50,7 @@ describe('Kiftables Run Through', async () => {
       public2,
       public3,
       public4,
-      gnosisSafe,
+
       newContributor
     ] = await ethers.getSigners();
 
@@ -61,13 +63,15 @@ describe('Kiftables Run Through', async () => {
     const vrfCoordFactory = await ethers.getContractFactory(
       vrfCoordinatorContract
     );
-    const mockVrfCoordinator = await vrfCoordFactory.connect(owner).deploy();
+    const mockVrfCoordinator = await vrfCoordFactory.connect(deployer).deploy();
 
     kiftables = await kiftContractFactory.deploy(
       BASE_PREREVEAL_URL,
       CHAINLINK_KEY_HASH,
       mockVrfCoordinator.address,
-      MOCK_SUBSCRIPTION_ID
+      MOCK_SUBSCRIPTION_ID,
+      LOCAL_OPENSEA_PROXY,
+      gnosisSafe.address
     );
   });
 
@@ -82,17 +86,12 @@ describe('Kiftables Run Through', async () => {
   });
 
   it('Initial counters are all 0', async () => {
-    expect(await kiftables.counter()).to.equal(0);
+    expect(await kiftables.nextTokenId()).to.equal(0);
     expect(await kiftables.lastTokenRevealed()).to.equal(0);
   });
 
-  it('Owner transfer to Gnosis Safe', async () => {
-    await kiftables.connect(owner).transferOwnership(gnosisSafe.address);
-    expect(await kiftables.owner()).to.equal(gnosisSafe.address);
-  });
-
   it('Successfully sets the base url', async () => {
-    await kiftables.connect(gnosisSafe).setBaseURI(IPFS_BASE_URL);
+    await kiftables.connect(deployer).setBaseURI(IPFS_BASE_URL);
     expect(await kiftables.baseURI()).to.equal(IPFS_BASE_URL);
   });
 
@@ -101,11 +100,14 @@ describe('Kiftables Run Through', async () => {
       kiftables
         .connect(gnosisSafe)
         ['safeTransferFrom(address,address,uint256)'](
-          owner.address,
+          deployer.address,
           community1.address,
           0
         )
-    ).to.be.revertedWithCustomError(kiftables, 'OwnerQueryForNonexistentToken');
+    ).to.be.revertedWithCustomError(
+      kiftables,
+      'OwnerQueryForNonexistentToken'
+    );
 
     await expect(
       kiftables
@@ -115,17 +117,25 @@ describe('Kiftables Run Through', async () => {
           public2.address,
           0
         )
-    ).to.be.revertedWithCustomError(kiftables, 'OwnerQueryForNonexistentToken');
+    ).to.be.revertedWithCustomError(
+      kiftables,
+      'OwnerQueryForNonexistentToken'
+    );
   });
 
   it('Successfully mints the treasury', async () => {
     expect(await kiftables.treasuryMinted()).to.equal(false);
-    await kiftables.connect(gnosisSafe).treasuryMint();
+    await kiftables.connect(deployer).treasuryMint();
     expect(await kiftables.treasuryMinted()).to.equal(true);
-    expect(await kiftables.counter()).to.equal(TREASURY_SIZE);
+    expect(await kiftables.nextTokenId()).to.equal(TREASURY_SIZE);
     // TODO :
     // Should the counter by 999 or 1000 here?
     // After minting 1000 tokens, the counter should be 999 but it's 1000
+  });
+
+  it('Owner transfer to Gnosis Safe', async () => {
+    await kiftables.connect(deployer).transferOwnership(gnosisSafe.address);
+    expect(await kiftables.owner()).to.equal(gnosisSafe.address);
   });
 
   it('Airdrop contributor tokens', async () => {
@@ -144,7 +154,7 @@ describe('Kiftables Run Through', async () => {
 
   it('Show IPFS prereveal metadata', async () => {
     const firstToken = 0;
-    const lastToken = (await kiftables.counter()).toNumber();
+    const lastToken = (await kiftables.nextTokenId()).toNumber();
     expect(await kiftables.tokenURI(firstToken)).to.equal(BASE_PREREVEAL_URL);
     expect(await kiftables.tokenURI(lastToken - 1)).to.equal(
       BASE_PREREVEAL_URL
@@ -224,16 +234,16 @@ describe('Kiftables Run Through', async () => {
     );
   });
 
-  it('Dont allow community mint over max per wallet', async () => {
-    const proof = allowListTree.getHexProof(allowListHash[2]);
-    mintCount = 5;
-    amount = parseFloat((0.08 * mintCount).toString()).toFixed(2);
-    await expect(
-      kiftables.connect(community1).mintCommunitySale(mintCount, proof, {
-        value: ethers.utils.parseEther(amount)
-      })
-    ).to.be.revertedWith('Max Kiftables to mint in community sale is five');
-  });
+  // it('Dont allow community mint over max per wallet', async () => {
+  //   const proof = allowListTree.getHexProof(allowListHash[2]);
+  //   mintCount = 5;
+  //   amount = parseFloat((0.08 * mintCount).toString()).toFixed(2);
+  //   await expect(
+  //     kiftables.connect(community1).mintCommunitySale(mintCount, proof, {
+  //       value: ethers.utils.parseEther(amount)
+  //     })
+  //   ).to.be.revertedWith('Max Kiftables to mint in community sale is five');
+  // });
 
   it('Allow public mint', async () => {
     await kiftables.connect(gnosisSafe).setIsCommunitySaleActive(false);
@@ -246,31 +256,37 @@ describe('Kiftables Run Through', async () => {
     expect(await kiftables.balanceOf(public1.address)).to.equal(mintCount);
   });
 
-    /**
+  /**
    * If you're airdropped 5 tokens, you should still be able to mint up to 5 during community sale
    */
-     it('Allow contributors to public mint', async () => {
-       console.log('Contrib 1 balance: ', await kiftables.balanceOf(contrib1.address));
-       console.log('Contrib 2 balance: ', await kiftables.balanceOf(contrib2.address));
-      mintCount = 5;
-      amount = parseFloat((0.1 * mintCount).toString()).toFixed(2);
-      await kiftables.connect(contrib2).mint(mintCount, {
-        value: ethers.utils.parseEther(amount)
-      });
-      expect(await kiftables.balanceOf(contrib2.address)).to.equal(
-        mintCount + AIRDROP_CONTRIB_COUNT
-      );
-    });
-
-  it('Dont allow public mint over max per wallet', async () => {
+  it('Allow contributors to public mint', async () => {
+    console.log(
+      'Contrib 1 balance: ',
+      await kiftables.balanceOf(contrib1.address)
+    );
+    console.log(
+      'Contrib 2 balance: ',
+      await kiftables.balanceOf(contrib2.address)
+    );
     mintCount = 5;
     amount = parseFloat((0.1 * mintCount).toString()).toFixed(2);
-    await expect(
-      kiftables.connect(public1).mint(mintCount, {
-        value: ethers.utils.parseEther(amount)
-      })
-    ).to.be.revertedWith('Max Kiftables to mint is five');
+    await kiftables.connect(contrib2).mint(mintCount, {
+      value: ethers.utils.parseEther(amount)
+    });
+    expect(await kiftables.balanceOf(contrib2.address)).to.equal(
+      mintCount + AIRDROP_CONTRIB_COUNT
+    );
   });
+
+  // it('Dont allow public mint over max per wallet', async () => {
+  //   mintCount = 5;
+  //   amount = parseFloat((0.1 * mintCount).toString()).toFixed(2);
+  //   await expect(
+  //     kiftables.connect(public1).mint(mintCount, {
+  //       value: ethers.utils.parseEther(amount)
+  //     })
+  //   ).to.be.revertedWith('Max Kiftables to mint is five');
+  // });
 
   it('Dont allow incorrect ETH payment', async () => {
     mintCount = 1000;
@@ -290,7 +306,7 @@ describe('Kiftables Run Through', async () => {
   });
 
   it('Reveal Minted Tokens', async () => {
-    const lastToken = (await kiftables.counter()).toNumber();
+    const lastToken = (await kiftables.nextTokenId()).toNumber();
     const batchesCount = Math.floor(lastToken / REVEAL_BATCH_SIZE);
     batches = [];
     for (let i = 0; i < batchesCount; i++) {
@@ -329,7 +345,7 @@ describe('Kiftables Run Through', async () => {
   });
 
   it('Reveal Entire Collection', async () => {
-    const lastMintedToken = (await kiftables.counter()).toNumber();
+    const lastMintedToken = (await kiftables.nextTokenId()).toNumber();
     const lastRevealedToken = (await kiftables.lastTokenRevealed()).toNumber();
     // reveal the remaining 35 batches
     const batchesCount = Math.floor(
@@ -388,10 +404,10 @@ describe('Kiftables Run Through', async () => {
     ).to.revertedWithCustomError(kiftables, 'TransferFromIncorrectOwner');
   });
 
-  it('Non-owner cannot transfer tokens', async () => {
+  it('Non-deployer cannot transfer tokens', async () => {
     let tokenIds = generateTokenIdArray(15, AIRDROP_CONTRIB_COUNT);
     await expect(
-      kiftables.connect(owner).airdrop(newContributor.address, tokenIds)
+      kiftables.connect(deployer).airdrop(newContributor.address, tokenIds)
     ).to.be.revertedWith('Ownable: caller is not the owner');
   });
 });

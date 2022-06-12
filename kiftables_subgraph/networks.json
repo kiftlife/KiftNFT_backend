@@ -1,7 +1,12 @@
 {
   "rinkeby": {
     "Kiftables": {
-      "address": "0x7d099277525C7e4B14d566fdf8a121529FBe4387"
+      "address": "0xf40A9c21B4A6787FCAa00e93a251a04f67f82fDd"
+    }
+  },
+  "mainnet": {
+    "Kiftables": {
+      "address": "0x228d11Ae974De7f92c16A1F621341759c56D039D"
     }
   }
 }
