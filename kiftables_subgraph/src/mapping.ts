@@ -187,22 +187,10 @@ export function handleReveal(event: RevealEvent): void {
       // [Pre-Reveal] ipfs://QmdwirNbpsi3aymwqEAtftMni5kmrqah44epkxJrAiU7aD
       // [Reveal] ipfs://QmTrHZFPNpjYTgEdqu4FRjxW8Y5yCkrKeQZ1N2odQNyUwt/274.json
 
-      let ipfsHash = tokenURI.replace('ipfs://', '')
-
-      // NOTE: This did not work!
-      // function processItem(jsonValue: JSONValue, userData: Value): void {
-      //   log.info(`[KIFT:processItem] processing tokenURI: ${tokenURI} | ipfsHash: ${ipfsHash} | userData: ${userData}`, [])
-        
-      //   if (token) {
-      //     processIpfsData(jsonValue, token, tokenURI, ipfsHash)
-      //   }
-      // }
-
-      // ipfs.mapJSON(ipfsHash, 'processItem', Value.fromString('parentId'))
-
       token.tokenURI = tokenURI.toString();
       token.save()
-
+      
+      let ipfsHash = tokenURI.replace('ipfs://', '')
       let revealId = ipfsHash.replace('.json', '')
       let reveal = new RevealRecord(revealId)
       reveal.tokenID = token.id
