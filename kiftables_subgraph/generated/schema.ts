@@ -61,6 +61,65 @@ export class Attribute extends Entity {
   }
 }
 
+export class RevealRecord extends Entity {
+  constructor(id: string) {
+    super();
+    this.set("id", Value.fromString(id));
+  }
+
+  save(): void {
+    let id = this.get("id");
+    assert(id != null, "Cannot save RevealRecord entity without an ID");
+    if (id) {
+      assert(
+        id.kind == ValueKind.STRING,
+        `Entities of type RevealRecord must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
+      );
+      store.set("RevealRecord", id.toString(), this);
+    }
+  }
+
+  static load(id: string): RevealRecord | null {
+    return changetype<RevealRecord | null>(store.get("RevealRecord", id));
+  }
+
+  get id(): string {
+    let value = this.get("id");
+    return value!.toString();
+  }
+
+  set id(value: string) {
+    this.set("id", Value.fromString(value));
+  }
+
+  get tokenID(): string {
+    let value = this.get("tokenID");
+    return value!.toString();
+  }
+
+  set tokenID(value: string) {
+    this.set("tokenID", Value.fromString(value));
+  }
+
+  get tokenURI(): string {
+    let value = this.get("tokenURI");
+    return value!.toString();
+  }
+
+  set tokenURI(value: string) {
+    this.set("tokenURI", Value.fromString(value));
+  }
+
+  get revealDate(): BigInt {
+    let value = this.get("revealDate");
+    return value!.toBigInt();
+  }
+
+  set revealDate(value: BigInt) {
+    this.set("revealDate", Value.fromBigInt(value));
+  }
+}
+
 export class Token extends Entity {
   constructor(id: string) {
     super();
@@ -228,6 +287,23 @@ export class Token extends Entity {
 
   set revealed(value: boolean) {
     this.set("revealed", Value.fromBoolean(value));
+  }
+
+  get reveal(): string | null {
+    let value = this.get("reveal");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toString();
+    }
+  }
+
+  set reveal(value: string | null) {
+    if (!value) {
+      this.unset("reveal");
+    } else {
+      this.set("reveal", Value.fromString(<string>value));
+    }
   }
 }
 

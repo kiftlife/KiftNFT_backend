@@ -4,6 +4,13 @@ type Attribute @entity {
   value: String!
 }
 
+type RevealRecord @entity {
+  id: ID! # this will be derived from the tokenURI
+  tokenID: String! # this will be the id / tokenId from the Token entity
+  tokenURI: String! # included so it's obvious what the reveal record id represents
+  revealDate: BigInt!
+}
+
 type Token @entity {
   id: ID!
   tokenID: BigInt!
@@ -16,6 +23,7 @@ type Token @entity {
   ipfsURI: String
   attributes: [Attribute!]!
   revealed: Boolean!
+  reveal: RevealRecord
 }
 
 type User @entity {
