@@ -14,7 +14,6 @@ type Token @entity {
   image: String
   tokenURI: String
   ipfsURI: String
-  ipfsHash: String
   attributes: [Attribute!]!
   revealed: Boolean!
   revealDataSet: Boolean
