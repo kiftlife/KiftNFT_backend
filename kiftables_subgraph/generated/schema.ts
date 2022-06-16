@@ -229,6 +229,15 @@ export class Token extends Entity {
   set revealed(value: boolean) {
     this.set("revealed", Value.fromBoolean(value));
   }
+
+  get revealDataSet(): boolean {
+    let value = this.get("revealDataSet");
+    return value!.toBoolean();
+  }
+
+  set revealDataSet(value: boolean) {
+    this.set("revealDataSet", Value.fromBoolean(value));
+  }
 }
 
 export class User extends Entity {
