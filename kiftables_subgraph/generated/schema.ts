@@ -118,13 +118,21 @@ export class Token extends Entity {
     }
   }
 
-  get owner(): string {
+  get owner(): string | null {
     let value = this.get("owner");
-    return value!.toString();
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toString();
+    }
   }
 
-  set owner(value: string) {
-    this.set("owner", Value.fromString(value));
+  set owner(value: string | null) {
+    if (!value) {
+      this.unset("owner");
+    } else {
+      this.set("owner", Value.fromString(<string>value));
+    }
   }
 
   get name(): string | null {
