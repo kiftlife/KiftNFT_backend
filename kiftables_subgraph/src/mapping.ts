@@ -87,6 +87,7 @@ function initializeToken(tokenId: string): Token {
   token.image = "ipfs://QmNqtqiYJxUWzCyPaGZFe8GFWLkT9FcZhQvN1cjM7MPFp1"
   token.revealed = false
   token._isRevealDataRead = false
+  token.attributes = []
 
   return token
 }
