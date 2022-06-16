@@ -35,3 +35,8 @@ Example:
 
 ** DISCLAIMER **
 If a new contract has been deployed, currently you need to new subgraph.
+
+### How to use
+
+Due to how the subgraph works and Kift's reveal strategy, we currently can't handle reading all NFT data upon the reveal event. To work around this,
+we set a flag showing a token is revealed during the reveal event. After running a reveal however, we'll need to re-deploy the subgraph to have it recomb the handleTransfer events and fetch the revealed ipfs data for tokens that have been revealed (and data hasn't yet been fetched).
