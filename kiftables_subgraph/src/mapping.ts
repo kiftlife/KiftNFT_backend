@@ -135,8 +135,8 @@ export function handleReveal(event: RevealEvent): void {
 
   const revealFinish = event.params.lastTokenRevealed.toI32()
   const revealStart = revealFinish - 200;
-  
   log.info(`[KIFT:handleReveal] token reveal start: ${revealStart.toString()} | finish: ${revealFinish.toString()}`, [])
+  
     
   for (let i = revealStart; i < revealFinish; i++) {
     let tokenId = i.toString()
@@ -146,12 +146,12 @@ export function handleReveal(event: RevealEvent): void {
     // If for some reason we reveal a token before it's transfered (created), handle creating the token here
     if (!token) {
       token = initializeToken(tokenId)
-
     }
     
     if (token && !token.revealed) {
       // ****** get new IPFS data now that revealed ******
       // Get tokenURI from Kiftables contract
+      log.info(`[KIFT:handleReveal] fetch tokenURI ${token.tokenID.toString()}`, [])
       let tokenURI = contract.tokenURI(token.tokenID)
 
       // tokenURI examples 
@@ -162,7 +162,6 @@ export function handleReveal(event: RevealEvent): void {
       token.tokenURI = tokenURI.toString()
       token.ipfsURI = 'ipfs.io/ipfs/' + ipfsHash
       token.revealed = true
-      token.save()
 
       // NOTE: IPFS reads can timeout, and trying to read 200 ipfs files during the reveal is sure to timeout. So for now, the solution
       // is to flag the token as revealed and update it's tokenURI / ipsfURI, but then rely on a new subgraph deployment to trigger handleTransfer
@@ -172,5 +171,7 @@ export function handleReveal(event: RevealEvent): void {
       // https://github.com/graphprotocol/graph-node/issues/963
       // https://github.com/ziegfried/peepeth-subgraph/blob/6f292581e73d5b070dedf0ab94e0712206391fe3/src/ipfs.ts#L9 
     }
+
+    token.save()
   }
 }
