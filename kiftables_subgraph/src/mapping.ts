@@ -11,7 +11,7 @@ import { Attribute, Token, User } from '../generated/schema'
  * [addIpfsDataToToken] - fetches ipfs data for provided hash and assigns relevant attributes to the provided token
  */
 
-const addIpfsDataToToken = (token: Token, ipfsHash: string) => {
+function addIpfsDataToToken(token: Token, ipfsHash: string): void {
   // tokenURI examples 
   // [Pre-Reveal] ipfs://QmdwirNbpsi3aymwqEAtftMni5kmrqah44epkxJrAiU7aD
   // [Reveal] ipfs://QmTrHZFPNpjYTgEdqu4FRjxW8Y5yCkrKeQZ1N2odQNyUwt/274.json
@@ -19,7 +19,7 @@ const addIpfsDataToToken = (token: Token, ipfsHash: string) => {
 
   
   if (!ipfsData) {
-    log.error(`[KIFT:handleTransfer] No ipfs data found for tokenId: ${token.tokenID.toString()}. tokenURI: ${tokenURI}`, []);
+    log.error(`[KIFT:addIpfsDataToToken] No ipfs data found for tokenId: ${token.tokenID.toString()}. ipfsHash: ${ipfsHash}`, []);
   }
 
   if (ipfsData) {
@@ -77,7 +77,7 @@ const addIpfsDataToToken = (token: Token, ipfsHash: string) => {
   }
 }
 
-const initializeToken = (token: Token) => {
+function initializeToken(token: Token): void {
   token.name = "Unrevealed Kiftable"
   token.description = "Your Kiftable will be revealed soon!"
   token.image = "ipfs://QmNqtqiYJxUWzCyPaGZFe8GFWLkT9FcZhQvN1cjM7MPFp1"
