@@ -146,6 +146,8 @@ export function handleReveal(event: RevealEvent): void {
     // If for some reason we reveal a token before it's transfered (created), handle creating the token here
     if (!token) {
       token = initializeToken(tokenId)
+      // TODO: set owner to contract wallet?
+      // token.owner = 
     }
     
     if (token && !token.revealed) {
@@ -172,6 +174,7 @@ export function handleReveal(event: RevealEvent): void {
       // https://github.com/ziegfried/peepeth-subgraph/blob/6f292581e73d5b070dedf0ab94e0712206391fe3/src/ipfs.ts#L9 
     }
 
+    token.updatedAtTimestamp = event.block.timestamp
     token.save()
   }
 }
