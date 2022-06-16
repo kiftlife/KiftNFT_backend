@@ -1,4 +1,4 @@
-import { ipfs, json, log } from '@graphprotocol/graph-ts'
+import { ipfs, json, log, BigInt } from '@graphprotocol/graph-ts'
 import {
   Transfer as TransferEvent,
   Kiftables as KiftablesContract,
@@ -77,12 +77,18 @@ function addIpfsDataToToken(token: Token, ipfsHash: string): void {
   }
 }
 
-function initializeToken(token: Token): void {
+function initializeToken(tokenId: string): Token {
+  log.info(`[KIFT:initializeToken] new token being created for id ${tokenId}`, [])
+  
+  let token = new Token(tokenId)
+  token.tokenID = BigInt.fromString(tokenId)
   token.name = "Unrevealed Kiftable"
   token.description = "Your Kiftable will be revealed soon!"
   token.image = "ipfs://QmNqtqiYJxUWzCyPaGZFe8GFWLkT9FcZhQvN1cjM7MPFp1"
   token.revealed = false
   token._isRevealDataRead = false
+
+  return token
 }
 
 export function handleTransfer(event: TransferEvent): void {
@@ -92,9 +98,7 @@ export function handleTransfer(event: TransferEvent): void {
   
   if (!token) {
     /* if the token does not yet exist, create it */
-    token = new Token(event.params.tokenId.toString())
-    log.info(`[KIFT:handleTransfer] new token being created for id ${token.id}`, [])
-    initializeToken(token);
+    token = initializeToken(event.params.tokenId.toString());
     
     // Get tokenURI from Kiftables contract
     let contract = KiftablesContract.bind(event.address)
@@ -140,8 +144,8 @@ export function handleReveal(event: RevealEvent): void {
 
     // If for some reason we reveal a token before it's transfered (created), handle creating the token here
     if (!token) {
-      token = new Token(tokenId)
-      initializeToken(token)
+      token = initializeToken(tokenId)
+
     }
     
     if (token && !token.revealed) {
