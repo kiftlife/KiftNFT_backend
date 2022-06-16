@@ -72,7 +72,7 @@ const addIpfsDataToToken = (token: Token, ipfsHash: string) => {
       }
 
       token.attributes = tokenAttributes       
-      token.revealDataSet = true
+      token._isRevealDataRead = true
     }
   }
 }
@@ -82,7 +82,7 @@ const initializeToken = (token: Token) => {
   token.description = "Your Kiftable will be revealed soon!"
   token.image = "ipfs://QmNqtqiYJxUWzCyPaGZFe8GFWLkT9FcZhQvN1cjM7MPFp1"
   token.revealed = false
-  token.revealDataSet = false
+  token._isRevealDataRead = false
 }
 
 export function handleTransfer(event: TransferEvent): void {
@@ -103,7 +103,7 @@ export function handleTransfer(event: TransferEvent): void {
     token.ipfsURI = 'ipfs.io/ipfs/' + ipfsHash  
   }
 
-  if (token.revealed && !token.revealDataSet) {
+  if (token.revealed && !token._isRevealDataRead) {
     let contract = KiftablesContract.bind(event.address)
     let tokenURI = contract.tokenURI(token.tokenID)
     token.tokenURI = tokenURI.toString()

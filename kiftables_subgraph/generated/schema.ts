@@ -230,13 +230,13 @@ export class Token extends Entity {
     this.set("revealed", Value.fromBoolean(value));
   }
 
-  get revealDataSet(): boolean {
-    let value = this.get("revealDataSet");
+  get _isRevealDataRead(): boolean {
+    let value = this.get("_isRevealDataRead");
     return value!.toBoolean();
   }
 
-  set revealDataSet(value: boolean) {
-    this.set("revealDataSet", Value.fromBoolean(value));
+  set _isRevealDataRead(value: boolean) {
+    this.set("_isRevealDataRead", Value.fromBoolean(value));
   }
 }
 

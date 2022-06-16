@@ -16,7 +16,7 @@ type Token @entity {
   ipfsURI: String
   attributes: [Attribute!]!
   revealed: Boolean!
-  revealDataSet: Boolean
+  _isRevealDataRead: Boolean
 }
 
 type User @entity {
