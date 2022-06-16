@@ -11,7 +11,7 @@ import { Attribute, Token, User } from '../generated/schema'
  * [addIpfsDataToToken] - fetches ipfs data for provided hash and assigns relevant attributes to the provided token
  */
 
-export const addIpfsDataToToken = (token: Token, ipfsHash: string) => {
+const addIpfsDataToToken = (token: Token, ipfsHash: string) => {
   // tokenURI examples 
   // [Pre-Reveal] ipfs://QmdwirNbpsi3aymwqEAtftMni5kmrqah44epkxJrAiU7aD
   // [Reveal] ipfs://QmTrHZFPNpjYTgEdqu4FRjxW8Y5yCkrKeQZ1N2odQNyUwt/274.json
@@ -77,6 +77,14 @@ export const addIpfsDataToToken = (token: Token, ipfsHash: string) => {
   }
 }
 
+const initializeToken = (token: Token) => {
+  token.name = "Unrevealed Kiftable"
+  token.description = "Your Kiftable will be revealed soon!"
+  token.image = "ipfs://QmNqtqiYJxUWzCyPaGZFe8GFWLkT9FcZhQvN1cjM7MPFp1"
+  token.revealed = false
+  token.revealDataSet = false
+}
+
 export function handleTransfer(event: TransferEvent): void {
   /* load the token from the existing Graph Node */
   let token = Token.load(event.params.tokenId.toString())
@@ -86,15 +94,8 @@ export function handleTransfer(event: TransferEvent): void {
     /* if the token does not yet exist, create it */
     token = new Token(event.params.tokenId.toString())
     log.info(`[KIFT:handleTransfer] new token being created for id ${token.id}`, [])
-
-    token.tokenID = event.params.tokenId
-    token.name = "Unrevealed Kiftable"
-    token.description = "Your Kiftable will be revealed soon!"
-    token.image = "ipfs://QmNqtqiYJxUWzCyPaGZFe8GFWLkT9FcZhQvN1cjM7MPFp1"
-    token.revealed = false
-    token.revealDataSet = false
+    initializeToken(token);
     
-
     // Get tokenURI from Kiftables contract
     let contract = KiftablesContract.bind(event.address)
     let tokenURI = contract.tokenURI(token.tokenID)
@@ -136,6 +137,12 @@ export function handleReveal(event: RevealEvent): void {
     let tokenId = i.toString()
     let token = Token.load(tokenId)
     log.info(`[KIFT:handleReveal] fetch tokenId ${tokenId} | token found: ${!!token}`, [])
+
+    // If for some reason we reveal a token before it's transfered (created), handle creating the token here
+    if (!token) {
+      token = new Token(tokenId)
+      initializeToken(token)
+    }
     
     if (token && !token.revealed) {
       // ****** get new IPFS data now that revealed ******
@@ -151,6 +158,14 @@ export function handleReveal(event: RevealEvent): void {
       token.ipfsURI = 'ipfs.io/ipfs/' + ipfsHash
       token.revealed = true
       token.save()
+
+      // NOTE: IPFS reads can timeout, and trying to read 200 ipfs files during the reveal is sure to timeout. So for now, the solution
+      // is to flag the token as revealed and update it's tokenURI / ipsfURI, but then rely on a new subgraph deployment to trigger handleTransfer
+      // and fetch for each token transfer. 
+      
+      // Reference material:
+      // https://github.com/graphprotocol/graph-node/issues/963
+      // https://github.com/ziegfried/peepeth-subgraph/blob/6f292581e73d5b070dedf0ab94e0712206391fe3/src/ipfs.ts#L9 
     }
   }
 }
