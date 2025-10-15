@@ -22,11 +22,58 @@ const deployAllContracts = async () => {
   return kiftContractFactory.deploy(
     BASE_PREREVEAL_URL,
     CHAINLINK_KEY_HASH,
-    mockVrfCoordinator.address,
+    mockVrfCoordinator.target,
     MOCK_SUBSCRIPTION_ID,
     LOCAL_OPENSEA_PROXY,
     gnosisSafe.address
   );
+};
+
+const deployKiftRedemption = async (kiftablesAddress, ethAmount) => {
+  const [deployer] = await ethers.getSigners();
+  const KiftRedemption = await ethers.getContractFactory('KiftRedemption');
+
+  const redemption = await KiftRedemption.connect(deployer).deploy(kiftablesAddress);
+
+  // Start registration with ETH
+  if (ethAmount) {
+    await redemption.connect(deployer).startRegistration({ value: ethAmount });
+  }
+
+  return redemption;
+};
+
+const setupNFTHolders = async (kiftables, wallets, tokenCounts) => {
+  const [deployer, gnosisSafe] = await ethers.getSigners();
+
+  // Mint treasury first
+  await kiftables.connect(deployer).treasuryMint();
+
+  // Transfer ownership to gnosis safe
+  await kiftables.connect(deployer).transferOwnership(gnosisSafe.address);
+
+  let currentTokenId = 0;
+  const walletTokenIds = [];
+
+  for (let i = 0; i < wallets.length; i++) {
+    const tokenIds = generateTokenIdArray(currentTokenId, tokenCounts[i]);
+    await kiftables.connect(gnosisSafe).airdrop(wallets[i].address, tokenIds);
+    walletTokenIds.push(tokenIds);
+    currentTokenId += tokenCounts[i];
+  }
+
+  return walletTokenIds;
+};
+
+const calculateExpectedDistribution = (totalEth, nftCounts) => {
+  const totalNFTs = nftCounts.reduce((sum, count) => sum + count, 0);
+  const ethPerNFT = totalEth / BigInt(totalNFTs);
+
+  return {
+    ethPerNFT,
+    distributions: nftCounts.map(count => ethPerNFT * BigInt(count)),
+    totalNFTs
+  };
 };
 
 const generateTokenIdArray = (start, length) => {
@@ -43,6 +90,9 @@ const asyncForEach = async (array, callback) => {
 
 module.exports = {
   deployAllContracts,
+  deployKiftRedemption,
+  setupNFTHolders,
+  calculateExpectedDistribution,
   generateTokenIdArray,
   asyncForEach
 };

@@ -1,18 +1,20 @@
-require('@nomiclabs/hardhat-web3');
+require('@nomicfoundation/hardhat-ethers');
 require('@nomicfoundation/hardhat-chai-matchers');
-require('@nomiclabs/hardhat-ethers');
-require('@nomiclabs/hardhat-etherscan');
+require('@nomicfoundation/hardhat-verify');
 require('hardhat-gas-reporter');
 require('hardhat-contract-sizer');
 require('dotenv').config();
 
+// Default test private key (DO NOT use in production)
+const DEFAULT_PRIVATE_KEY = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80';
+
 const {
-  ALCHEMY_RINKEBY_API_URL,
-  DEV_PRIVATE_KEY,
-  COINMARKETCAP_KEY,
-  ETHERSCAN_KEY,
-  INFURA_API_URL,
-  PROD_PRIVATE_KEY
+  ALCHEMY_RINKEBY_API_URL = 'https://eth-rinkeby.alchemyapi.io/v2/default',
+  DEV_PRIVATE_KEY = DEFAULT_PRIVATE_KEY,
+  COINMARKETCAP_KEY = '',
+  ETHERSCAN_KEY = '',
+  INFURA_API_URL = 'https://mainnet.infura.io/v3/default',
+  PROD_PRIVATE_KEY = DEFAULT_PRIVATE_KEY
 } = process.env;
 
 
@@ -20,15 +22,17 @@ const {
  * @type import('hardhat/config').HardhatUserConfig
  */
 module.exports = {
-  solidity: '0.8.4',
+  solidity: {
+    version: '0.8.20',
+    settings: {
+      optimizer: {
+        enabled: true,
+        runs: 200,
+      },
+    },
+  },
   paths: {
     artifacts: './src/artifacts'
-  },
-  settings: {
-    optimizer: {
-      enabled: true,
-      runs: 2000,
-    },
   },
 
   networks: {
@@ -46,7 +50,11 @@ module.exports = {
   }
   },
   etherscan: {
-    apiKey: ETHERSCAN_KEY
+    apiKey: {
+      mainnet: ETHERSCAN_KEY,
+      sepolia: ETHERSCAN_KEY,
+      rinkeby: ETHERSCAN_KEY
+    }
   },
   gasReporter: {
     currency: 'USD',
